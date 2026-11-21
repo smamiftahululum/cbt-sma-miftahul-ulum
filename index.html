@@ -116,6 +116,13 @@
                 </form>
             </div>
 
+            <!-- Versi Aplikasi di Pojok Kiri Bawah Halaman Utama -->
+            <div id="frontpage-version-badge" class="fixed bottom-4 left-4 z-30 no-print pointer-events-none">
+                <span id="frontpage-app-version" class="inline-block px-3 py-1.5 rounded-xl bg-white/90 text-slate-600 border border-slate-200/90 shadow-sm backdrop-blur-sm font-mono font-semibold text-xs">
+                    Versi 1.0
+                </span>
+            </div>
+
             <!-- Tombol Login Portal Guru & Operator di Pojok Kanan Bawah -->
             <div class="fixed bottom-4 right-4 z-30 flex items-center gap-2 no-print">
                 <button type="button" id="btn-header-teacher" onclick="openTeacherPinModal()"
@@ -748,16 +755,16 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
+                            <button type="button" id="btn-toggle-shuffle-questions" role="switch" aria-checked="false" onclick="toggleManageShuffleQuestions()"
+                                class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-sm transition inline-flex items-center gap-2.5">
+                                <span id="shuffle-toggle-track" class="w-9 h-5 rounded-full bg-slate-300 p-0.5 flex items-center transition-colors">
+                                    <span id="shuffle-toggle-thumb" class="w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform translate-x-0"></span>
+                                </span>
+                                <span>Acak Soal</span>
+                            </button>
                             <button type="submit"
                                 class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition">
                                 Simpan Pengaturan Ujian
-                            </button>
-                            <button type="button" onclick="shuffleManageExamQuestions()"
-                                class="px-5 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition inline-flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <span>Acak Nomor Soal</span>
                             </button>
                         </div>
                     </form>
@@ -944,11 +951,6 @@
                         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Target Kelas</span>
-                                <div class="flex items-center gap-2 text-xs">
-                                    <button type="button" onclick="setAllOperatorNewClasses(true)" class="font-semibold text-indigo-600 hover:underline">Pilih Semua</button>
-                                    <span class="text-slate-300">|</span>
-                                    <button type="button" onclick="setAllOperatorNewClasses(false)" class="font-semibold text-slate-500 hover:underline">Kosongkan</button>
-                                </div>
                             </div>
                             <div id="op-new-subj-classes" class="flex flex-wrap gap-2"></div>
                         </div>
@@ -1211,9 +1213,6 @@
                                             <option value="ALL">Semua Kelas</option>
                                         </select>
                                     </div>
-                                    <button type="button" onclick="clearTeacherSubjectCheckboxes('op-new-teacher-subjects')" class="text-xs font-semibold text-indigo-600 hover:underline">
-                                        Kosongkan (Akses Semua Mapel)
-                                    </button>
                                 </div>
                             </div>
                             <div id="op-new-teacher-subjects" class="flex flex-wrap gap-2"></div>
@@ -1237,8 +1236,8 @@
                 <form onsubmit="saveOperatorMenuConfig(event)" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
                     <div class="space-y-4">
                         <div>
-                            <h3 class="font-bold text-slate-900 text-base">Identitas Sekolah & Teks Halaman Depan</h3>
-                            <p class="text-xs text-slate-500">Sesuaikan nama sekolah, label semester, dan judul kartu login peserta ujian.</p>
+                            <h3 class="font-bold text-slate-900 text-base">Identitas Sekolah, Versi & Teks Halaman Depan</h3>
+                            <p class="text-xs text-slate-500">Sesuaikan nama sekolah, label semester, versi aplikasi, dan judul kartu login peserta ujian.</p>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1258,6 +1257,11 @@
                                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold outline-none focus:border-indigo-500">
                             </div>
                             <div>
+                                <label for="op-cfg-app-version" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Versi Aplikasi (Pojok Kiri Bawah)</label>
+                                <input type="text" id="op-cfg-app-version" placeholder="Contoh: Versi 1.0"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold outline-none focus:border-indigo-500">
+                            </div>
+                            <div class="sm:col-span-2">
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Judul Selamat Datang Halaman Depan</label>
                                 <input type="text" id="op-cfg-login-title" oninput="updateOperatorBrandingPreview()" required
                                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold outline-none focus:border-indigo-500">
@@ -1266,6 +1270,100 @@
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Instruksi Singkat Halaman Depan</label>
                                 <input type="text" id="op-cfg-login-subtitle" required
                                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kostumisasi Logo Sekolah & Background Halaman Utama -->
+                    <div class="border-t border-slate-100 pt-5 space-y-5">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base">Kostumisasi Logo Sekolah & Background Halaman Utama</h3>
+                            <p class="text-xs text-slate-500">Unggah logo sekolah dan atur latar belakang (gambar atau tema warna) untuk tampilan halaman depan web.</p>
+                        </div>
+
+                        <!-- Logo Sekolah -->
+                        <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-3">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Logo Sekolah</label>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div id="op-logo-preview-box" class="w-16 h-16 rounded-2xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden p-1.5 shrink-0">
+                                    <span class="text-[11px] text-slate-400 text-center leading-tight">Default</span>
+                                </div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs cursor-pointer shrink-0 transition">
+                                            Unggah Logo
+                                            <input type="file" id="op-cfg-logo-file" accept="image/*" onchange="handleOperatorImageUpload(event, 'logo')" class="hidden">
+                                        </label>
+                                        <input type="text" id="op-cfg-school-logo" oninput="updateOperatorBrandingPreview()" placeholder="Atau tempel URL gambar logo sekolah..."
+                                            class="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-indigo-500">
+                                        <button type="button" onclick="clearOperatorSchoolLogo()"
+                                            class="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs transition">
+                                            Reset Logo
+                                        </button>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500">Disarankan gambar berformat PNG/JPG rasio persegi (1:1). Logo tampil pada kartu halaman depan dan header.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Background Halaman Utama -->
+                        <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Background Halaman Utama</label>
+                                <input type="hidden" id="op-cfg-bg-preset" value="none">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <button type="button" data-bg-preset="none" onclick="selectOperatorBgPreset('none')"
+                                        class="op-bg-preset-btn px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-[11px] font-semibold text-slate-700 transition">
+                                        Polos
+                                    </button>
+                                    <button type="button" data-bg-preset="blue" onclick="selectOperatorBgPreset('blue')"
+                                        class="op-bg-preset-btn px-2.5 py-1 rounded-lg border border-blue-200 bg-blue-50 text-[11px] font-semibold text-blue-800 transition">
+                                        Biru Akademik
+                                    </button>
+                                    <button type="button" data-bg-preset="emerald" onclick="selectOperatorBgPreset('emerald')"
+                                        class="op-bg-preset-btn px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-[11px] font-semibold text-emerald-800 transition">
+                                        Hijau Zamrud
+                                    </button>
+                                    <button type="button" data-bg-preset="amber" onclick="selectOperatorBgPreset('amber')"
+                                        class="op-bg-preset-btn px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-[11px] font-semibold text-amber-800 transition">
+                                        Emas Hangat
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs cursor-pointer shrink-0 transition">
+                                    Unggah Gambar Background
+                                    <input type="file" id="op-cfg-bg-file" accept="image/*" onchange="handleOperatorImageUpload(event, 'bg')" class="hidden">
+                                </label>
+                                <input type="text" id="op-cfg-login-bg" oninput="onOperatorBgUrlInput()" placeholder="Atau tempel URL foto/background halaman depan..."
+                                    class="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-indigo-500">
+                                <button type="button" onclick="clearOperatorLoginBg()"
+                                    class="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs transition">
+                                    Hapus Background
+                                </button>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-semibold text-slate-600">Kecerahan Lapisan Overlay: <strong id="op-cfg-bg-overlay-label" class="text-indigo-700">Netral (0%)</strong></span>
+                                    <button type="button" onclick="resetOperatorBgOverlay()" class="text-indigo-600 hover:underline font-semibold">Reset (0%)</button>
+                                </div>
+                                <input type="range" id="op-cfg-bg-overlay" min="-80" max="80" step="5" value="0" oninput="updateOperatorBrandingPreview()"
+                                    class="w-full accent-indigo-600 cursor-pointer">
+                            </div>
+
+                            <!-- Pratinjau Mini Halaman Depan -->
+                            <div class="space-y-1.5">
+                                <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Pratinjau Halaman Depan</span>
+                                <div id="op-frontpage-mini-preview" class="relative h-40 rounded-2xl border border-slate-200 bg-slate-100 bg-cover bg-center overflow-hidden flex items-center justify-center p-4">
+                                    <div id="op-frontpage-mini-overlay" class="absolute inset-0 transition-colors"></div>
+                                    <div class="relative z-10 bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200 px-5 py-3 text-center max-w-xs shadow-sm space-y-1">
+                                        <div id="op-mini-logo-slot" class="w-10 h-10 mx-auto rounded-lg bg-indigo-600 text-white flex items-center justify-center overflow-hidden text-xs font-bold">CBT</div>
+                                        <p id="op-mini-school-name" class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 truncate">SMA Miftahul Ulum</p>
+                                        <p id="op-mini-login-title" class="text-xs font-bold text-slate-900 line-clamp-1">Selamat Datang di Aplikasi Ujian Semester</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1820,6 +1918,7 @@
                     schoolName: "SMA Miftahul Ulum",
                     schoolSubtitle: "Sistem Evaluasi & Ujian Akhir Semester",
                     semesterBadge: "SEMESTER GANJIL / GENAP",
+                    appVersion: "Versi 1.0",
                     loginTitle: "Selamat Datang di Aplikasi Ujian Semester",
                     loginSubtitle: "Masukkan kode akses kelas Anda untuk melanjutkan ke pengisian data diri peserta.",
                     schoolLogoUrl: "",
@@ -1875,6 +1974,7 @@
                         kkm: 75,
                         showScore: true,
                         showReview: true,
+                        shuffleQuestions: false,
                         scheduleDate: today,
                         startTime: "07:30",
                         endTime: "16:00",
@@ -1928,6 +2028,7 @@
                         kkm: 75,
                         showScore: true,
                         showReview: true,
+                        shuffleQuestions: false,
                         scheduleDate: today,
                         startTime: "07:30",
                         endTime: "16:00",
@@ -1984,6 +2085,7 @@
                         kkm: 75,
                         showScore: true,
                         showReview: true,
+                        shuffleQuestions: false,
                         scheduleDate: today,
                         startTime: "07:30",
                         endTime: "16:00",
@@ -2202,6 +2304,18 @@
             document.getElementById("welcome-school-name").textContent = cfg.schoolName;
             document.getElementById("login-title").textContent = cfg.loginTitle;
             document.getElementById("login-subtitle").textContent = cfg.loginSubtitle;
+
+            const verBadge = document.getElementById("frontpage-version-badge");
+            const verText = document.getElementById("frontpage-app-version");
+            if (verBadge && verText) {
+                const verVal = (cfg.appVersion || "").trim();
+                if (verVal) {
+                    verText.textContent = verVal;
+                    verBadge.classList.remove("hidden");
+                } else {
+                    verBadge.classList.add("hidden");
+                }
+            }
 
             const headerLogo = document.getElementById("header-logo-container");
             const frontLogo = document.getElementById("frontpage-school-logo-box");
@@ -2545,8 +2659,11 @@
                 activeExamSession.studentName = studentName;
                 showToast("Sesi ujian sebelumnya berhasil dipulihkan.", "info");
             } else {
+                const baseQuestions = JSON.parse(JSON.stringify(activeQs));
+                const studentQuestions = subj.shuffleQuestions ? shuffleArray(baseQuestions) : baseQuestions;
+
                 const matchingRightOrders = {};
-                activeQs.forEach(q => {
+                studentQuestions.forEach(q => {
                     if (q.type === "matching" && Array.isArray(q.pairs)) {
                         matchingRightOrders[q.id] = shuffleArray(q.pairs.map(p => p.right));
                     }
@@ -2559,7 +2676,7 @@
                     className: studentClass,
                     subjectId: subj.id,
                     subjectTitle: subj.title,
-                    questions: JSON.parse(JSON.stringify(activeQs)),
+                    questions: studentQuestions,
                     passages: JSON.parse(JSON.stringify(subj.passages || [])),
                     matchingRightOrders,
                     answers: {},
@@ -4146,12 +4263,14 @@
             const subj = getSelectedManageSubject();
             if (!subj) {
                 document.getElementById("manage-exam-questions-list").innerHTML = "";
+                updateManageShuffleButtonUI(false);
                 return;
             }
             document.getElementById("manage-duration-input").value = subj.durationMinutes || 60;
             document.getElementById("manage-kkm-input").value = subj.kkm || 75;
             document.getElementById("manage-show-score").checked = subj.showScore !== false;
             document.getElementById("manage-show-review").checked = subj.showReview !== false;
+            updateManageShuffleButtonUI(Boolean(subj.shuffleQuestions));
             renderManageExamQuestionsList();
         }
 
@@ -4165,6 +4284,37 @@
             subj.showReview = document.getElementById("manage-show-review").checked;
             saveAppState(true);
             showToast(`Pengaturan ujian ${subj.title} berhasil disimpan.`, "success");
+        }
+
+        function updateManageShuffleButtonUI(isShuffled) {
+            const btn = document.getElementById("btn-toggle-shuffle-questions");
+            const track = document.getElementById("shuffle-toggle-track");
+            const thumb = document.getElementById("shuffle-toggle-thumb");
+            if (!btn || !track || !thumb) return;
+            btn.setAttribute("aria-checked", isShuffled ? "true" : "false");
+            if (isShuffled) {
+                btn.className = "px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-600 font-bold text-sm transition inline-flex items-center gap-2.5";
+                track.className = "w-9 h-5 rounded-full bg-indigo-400/70 p-0.5 flex items-center transition-colors";
+                thumb.className = "w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform translate-x-4";
+            } else {
+                btn.className = "px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-sm transition inline-flex items-center gap-2.5";
+                track.className = "w-9 h-5 rounded-full bg-slate-300 p-0.5 flex items-center transition-colors";
+                thumb.className = "w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform translate-x-0";
+            }
+        }
+
+        function toggleManageShuffleQuestions() {
+            const subj = getSelectedManageSubject();
+            if (!subj) return;
+            subj.shuffleQuestions = !Boolean(subj.shuffleQuestions);
+            updateManageShuffleButtonUI(subj.shuffleQuestions);
+            saveAppState(true);
+            showToast(
+                subj.shuffleQuestions
+                    ? `Acak Soal otomatis untuk setiap siswa diaktifkan pada ${subj.title}.`
+                    : `Acak Soal otomatis dinonaktifkan pada ${subj.title}.`,
+                "info"
+            );
         }
 
         function renderManageExamQuestionsList() {
@@ -4245,30 +4395,6 @@
             saveAppState(true);
             renderManageExamQuestionsList();
             showToast(`100 poin dibagi rata (${each} poin per soal).`, "success");
-        }
-
-        function shuffleManageExamQuestions() {
-            const subj = getSelectedManageSubject();
-            if (!subj) return;
-            const activeQs = (subj.questions || []).filter(q => q.inExam !== false);
-            if (activeQs.length < 2) {
-                showToast("Minimal harus ada 2 soal aktif untuk mengacak nomor soal.", "warning");
-                return;
-            }
-            let shuffled = shuffleArray(activeQs);
-            while (shuffled.every((q, i) => q.id === activeQs[i].id)) {
-                shuffled = shuffleArray(activeQs);
-            }
-            let activePointer = 0;
-            subj.questions = subj.questions.map(q => {
-                if (q.inExam !== false) {
-                    return shuffled[activePointer++];
-                }
-                return q;
-            });
-            saveAppState(true);
-            renderManageExamQuestionsList();
-            showToast("Urutan nomor soal ujian berhasil diacak!", "success");
         }
 
         function moveActiveQuestionOrder(qId, direction) {
@@ -4698,6 +4824,7 @@
                 kkm: 75,
                 showScore: true,
                 showReview: true,
+                shuffleQuestions: false,
                 scheduleDate: getTodayIsoDate(),
                 startTime: "07:30",
                 endTime: "16:00",
@@ -5369,6 +5496,7 @@
             setVal("op-cfg-school-name", cfg.schoolName || "");
             setVal("op-cfg-school-subtitle", cfg.schoolSubtitle || "");
             setVal("op-cfg-semester-badge", cfg.semesterBadge || "");
+            setVal("op-cfg-app-version", cfg.appVersion || "");
             setVal("op-cfg-login-title", cfg.loginTitle || "");
             setVal("op-cfg-login-subtitle", cfg.loginSubtitle || "");
             setVal("op-cfg-school-logo", cfg.schoolLogoUrl || "");
@@ -5536,6 +5664,7 @@
             const schoolNameEl = document.getElementById("op-cfg-school-name");
             const subtitleEl = document.getElementById("op-cfg-school-subtitle");
             const semesterEl = document.getElementById("op-cfg-semester-badge");
+            const appVersionEl = document.getElementById("op-cfg-app-version");
             const loginTitleEl = document.getElementById("op-cfg-login-title");
             const loginSubEl = document.getElementById("op-cfg-login-subtitle");
             const logoEl = document.getElementById("op-cfg-school-logo");
@@ -5550,6 +5679,7 @@
             if (schoolNameEl) cfg.schoolName = (schoolNameEl.value || "").trim() || "SMA Miftahul Ulum";
             if (subtitleEl) cfg.schoolSubtitle = (subtitleEl.value || "").trim();
             if (semesterEl) cfg.semesterBadge = (semesterEl.value || "").trim();
+            if (appVersionEl) cfg.appVersion = (appVersionEl.value || "").trim();
             if (loginTitleEl) cfg.loginTitle = (loginTitleEl.value || "").trim();
             if (loginSubEl) cfg.loginSubtitle = (loginSubEl.value || "").trim();
             if (logoEl) cfg.schoolLogoUrl = (logoEl.value || "").trim();
