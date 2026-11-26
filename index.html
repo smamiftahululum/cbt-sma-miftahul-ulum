@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CBT SMA Miftahul Ulum - Ujian Akhir Semester</title>
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <!-- KaTeX untuk Render Rumus Matematika & Kimia (Opsional saat Online, Aman saat Offline) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="if(window.rerenderVisibleMath) window.rerenderVisibleMath();"></script>
+    <!-- KaTeX CSS dimuat non-blocking agar tidak menghambat render awal halaman -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" media="print" onload="this.media='all'">
     <script>
         // Penjaga awal agar klik tombol sebelum skrip utama selesai dimuat tidak memicu ReferenceError
         window.__cbtDeferredAction = null;
@@ -24,9 +27,11 @@
             window.__cbtDeferredAction = "verifyStudentAccessCode";
         };
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    </noscript>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -156,8 +161,8 @@
                             <p id="welcome-unsynced-meta" class="text-[11px] text-rose-800 mt-0.5">-</p>
                         </div>
                     </div>
-                    <button type="button" onclick="syncPendingResultsQueue(false)"
-                        class="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-sm">
+                    <button type="button" id="btn-welcome-sync-now" onclick="syncPendingResultsQueue(false)"
+                        class="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white font-bold text-xs transition shadow-sm">
                         Kirim Ulang ke Server Sekarang
                     </button>
                 </div>
@@ -378,6 +383,7 @@
                                 <div id="question-passage-image-wrapper" class="hidden">
                                     <div class="relative inline-block group">
                                         <img id="question-passage-image" src="" alt="Gambar Pendukung Bacaan"
+                                            decoding="async"
                                             onclick="openImageLightbox(this.src)"
                                             title="Klik untuk memperbesar gambar"
                                             class="max-h-60 rounded-xl border border-slate-200 object-contain bg-slate-50 p-1 cursor-zoom-in hover:border-indigo-400 transition">
@@ -392,6 +398,7 @@
                         <div id="question-image-wrapper" class="hidden">
                             <div class="relative inline-block">
                                 <img id="question-image" src="" alt="Gambar Pendukung Soal"
+                                    decoding="async"
                                     onclick="openImageLightbox(this.src)"
                                     title="Klik untuk memperbesar gambar"
                                     class="max-h-72 rounded-xl border border-slate-200 object-contain bg-slate-50 p-1 cursor-zoom-in hover:border-indigo-400 transition">
@@ -907,7 +914,7 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                             <p class="text-xs text-slate-500">Pilih tombol <strong>Ujikan</strong> untuk memasukkan soal ke paket ujian aktif.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="teacher-question-search" oninput="renderTeacherQuestionsList()" placeholder="Cari teks / tipe soal..."
+                            <input type="text" id="teacher-question-search" oninput="debouncedRenderTeacherQuestionsList()" placeholder="Cari teks / tipe soal..."
                                 class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold outline-none focus:border-indigo-500">
                             <button type="button" onclick="activateAllBankQuestionsToExam()"
                                 class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition">
@@ -1070,7 +1077,7 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Cari Peserta</label>
-                            <input type="text" id="res-filter-search" oninput="renderTeacherResultsTable()" placeholder="Nama siswa atau NISN..."
+                            <input type="text" id="res-filter-search" oninput="debouncedRenderTeacherResultsTable()" placeholder="Nama siswa atau NISN..."
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-semibold outline-none focus:border-indigo-500">
                         </div>
                     </div>
@@ -2051,9 +2058,17 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 : defaultFirebaseConfig);
         const appId = typeof __app_id !== "undefined" ? __app_id : "cbt-sma-miftahul-ulum";
 
+        let resolveCloudReady = null;
+        const cloudReadyPromise = new Promise((resolve) => {
+            resolveCloudReady = resolve;
+        });
+
         window.cloudSync = {
             enabled: false,
             uid: null,
+            lastError: null,
+            ready: cloudReadyPromise,
+            reinit: async () => false,
             saveConfig: async () => ({ ok: false }),
             saveSubject: async () => ({ ok: false }),
             deleteSubject: async () => ({ ok: false }),
@@ -2063,277 +2078,254 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             deleteAllResults: async () => ({ ok: false }),
             refreshResults: async () => {},
             refreshAllState: async () => {},
-            checkStudentAlreadyDone: async () => false
+            checkStudentAlreadyDone: async () => false,
+            setSubjectsRealtime: () => {}
         };
 
-        async function initCloudSync() {
-            const hasValidApiKey = firebaseConfig && firebaseConfig.apiKey && !String(firebaseConfig.apiKey).startsWith("ISI_");
-            if (!hasValidApiKey) {
-                if (typeof window.updateCloudStatusBadge === "function") {
-                    window.updateCloudStatusBadge(false);
-                }
-                return;
+        // Bersihkan nilai undefined dan gambar Base64 berukuran besar dari dokumen hasil siswa agar unggahan ke Firestore cepat & bebas error batas 1 MB
+        function sanitizeResultPayloadForFirestore(rawRecord) {
+            const clean = JSON.parse(JSON.stringify(rawRecord || {}));
+            clean.cloudSynced = true;
+            if (clean.nisn) {
+                clean.nisnNormalized = String(clean.nisn).trim().replace(/\s+/g, "").toUpperCase();
             }
+            if (Array.isArray(clean.questions)) {
+                clean.questions = clean.questions.map((q) => {
+                    if (!q || typeof q !== "object") return q;
+                    const qCopy = { ...q };
+                    if (typeof qCopy.imageUrl === "string" && qCopy.imageUrl.startsWith("data:")) {
+                        qCopy.imageUrl = "";
+                    }
+                    return qCopy;
+                });
+            }
+            if (Array.isArray(clean.passages)) {
+                clean.passages = clean.passages.map((p) => {
+                    if (!p || typeof p !== "object") return p;
+                    const pCopy = { ...p };
+                    if (typeof pCopy.imageUrl === "string" && pCopy.imageUrl.startsWith("data:")) {
+                        pCopy.imageUrl = "";
+                    }
+                    return pCopy;
+                });
+            }
+            return clean;
+        }
 
+        let subjectsRealtimeUnsub = null;
+
+        async function initCloudSync() {
             try {
+                if (!firebaseConfig || !firebaseConfig.apiKey) {
+                    if (typeof window.updateCloudStatusBadge === "function") {
+                        window.updateCloudStatusBadge(false);
+                    }
+                    resolveCloudReady(false);
+                    return false;
+                }
+
                 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
                 const auth = getAuth(app);
-
                 try {
                     if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
+                    } else if (!auth.currentUser) {
                         await signInAnonymously(auth);
                     }
-                    window.cloudSync.uid = auth.currentUser?.uid || null;
                 } catch (authErr) {
-                    console.warn("Autentikasi anonim belum diaktifkan di Firebase Console, melanjutkan akses Firestore:", authErr.code || authErr.message);
+                    console.warn("Autentikasi anonim dilewati, melanjutkan koneksi Firestore:", authErr);
                 }
 
                 let db;
                 try {
-                    db = initializeFirestore(app, { localCache: memoryLocalCache() });
-                } catch (e) {
+                    db = initializeFirestore(app, {
+                        localCache: memoryLocalCache(),
+                        experimentalAutoDetectLongPolling: true
+                    });
+                } catch (fsErr) {
                     db = getFirestore(app);
                 }
 
-                const configDocRef = doc(db, "artifacts", appId, "public", "data", "cbt_state", "main_config");
-                const subjectsColRef = collection(db, "artifacts", appId, "public", "data", "cbt_subjects");
-                const resultsColRef = collection(db, "artifacts", appId, "public", "data", "cbt_results");
+                const basePath = ["artifacts", appId, "public", "data"];
+                const configDocRef = doc(db, ...basePath, "cbt_state", "main_config");
+                const subjectsColRef = collection(db, ...basePath, "cbt_subjects");
+                const resultsColRef = collection(db, ...basePath, "cbt_results");
 
                 window.cloudSync.enabled = true;
+                window.cloudSync.uid = auth.currentUser?.uid || "public_client";
                 if (typeof window.updateCloudStatusBadge === "function") {
                     window.updateCloudStatusBadge(true);
                 }
 
-                // Hapus properti bernilai undefined secara rekursif agar setDoc Firestore tidak error
-                const sanitizeForFirestore = (val) => {
-                    if (Array.isArray(val)) {
-                        return val.map(item => sanitizeForFirestore(item));
-                    }
-                    if (val !== null && typeof val === "object") {
-                        const cleanObj = {};
-                        Object.keys(val).forEach(k => {
-                            if (val[k] !== undefined) {
-                                cleanObj[k] = sanitizeForFirestore(val[k]);
-                            }
-                        });
-                        return cleanObj;
-                    }
-                    return val;
-                };
-
-                // Simpan konfigurasi global (tanpa array subjects & tanpa plain-text operatorPin)
-                window.cloudSync.saveConfig = async (stateObj) => {
+                window.cloudSync.saveConfig = async (state) => {
                     try {
-                        const safeConfig = { ...(stateObj.config || {}) };
-                        delete safeConfig.operatorPin;
-                        await setDoc(configDocRef, sanitizeForFirestore({
-                            config: safeConfig,
-                            classes: stateObj.classes || [],
-                            studentCodes: stateObj.studentCodes || [],
-                            teachers: stateObj.teachers || [],
-                            subjects: deleteField(),
+                        const cleanCfg = { ...(state.config || {}) };
+                        delete cleanCfg.operatorPin;
+                        await setDoc(configDocRef, {
+                            config: cleanCfg,
+                            classes: state.classes || [],
+                            studentCodes: state.studentCodes || [],
+                            teachers: state.teachers || [],
                             updatedAt: Date.now()
-                        }), { merge: true });
+                        }, { merge: true });
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menyinkronkan konfigurasi ke Cloud:", err);
-                        return { ok: false, error: err?.message || "Gagal sinkronisasi konfigurasi" };
+                        console.warn("Gagal menyimpan konfigurasi ke Cloud:", err);
+                        return { ok: false, error: err };
                     }
                 };
 
-                // Simpan satu mata pelajaran ke dokumennya sendiri dengan pengecekan ukuran dokumen Firestore (< 950 KB)
                 window.cloudSync.saveSubject = async (subjectObj) => {
                     if (!subjectObj || !subjectObj.id) return { ok: false };
                     try {
-                        const payload = sanitizeForFirestore({
-                            ...subjectObj,
-                            updatedAt: Date.now()
-                        });
-                        const approxBytes = new TextEncoder().encode(JSON.stringify(payload)).length;
-                        if (approxBytes > 950000) {
-                            if (typeof window.showToast === "function") {
-                                window.showToast("Ukuran data & gambar mapel mendekati batas 1 MB Cloud. Perkecil/kurangi gambar soal.", "warning");
-                            }
-                            return { ok: false, error: "Ukuran dokumen melebihi batas 1 MB" };
-                        }
                         const subjDocRef = doc(subjectsColRef, String(subjectObj.id));
-                        await setDoc(subjDocRef, payload);
+                        await setDoc(subjDocRef, { ...subjectObj, updatedAt: Date.now() }, { merge: true });
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menyinkronkan mata pelajaran ke Cloud:", err);
-                        if (typeof window.showToast === "function") {
-                            window.showToast("Peringatan Cloud: Gagal menyimpan mapel ke server (periksa ukuran gambar/koneksi).", "warning");
-                        }
-                        return { ok: false, error: err?.message || "Gagal menyimpan mapel" };
+                        console.warn("Gagal menyimpan mata pelajaran ke Cloud:", err);
+                        return { ok: false, error: err };
                     }
                 };
 
                 window.cloudSync.deleteSubject = async (subjectId) => {
+                    if (!subjectId) return { ok: false };
                     try {
-                        const subjDocRef = doc(subjectsColRef, String(subjectId));
-                        await deleteDoc(subjDocRef);
+                        await deleteDoc(doc(subjectsColRef, String(subjectId)));
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menghapus mata pelajaran dari Cloud:", err);
-                        return { ok: false, error: err?.message || "Gagal menghapus mapel" };
+                        console.warn("Gagal menghapus mata pelajaran di Cloud:", err);
+                        return { ok: false, error: err };
                     }
                 };
 
                 window.cloudSync.saveAllSubjects = async (subjectsArr) => {
-                    for (const s of (subjectsArr || [])) {
-                        await window.cloudSync.saveSubject(s);
-                    }
-                    return { ok: true };
-                };
-
-                window.cloudSync.saveResult = async (resultObj) => {
+                    if (!Array.isArray(subjectsArr)) return { ok: false };
                     try {
-                        const resDocRef = doc(resultsColRef, String(resultObj.id));
-                        const payload = sanitizeForFirestore({
-                            ...resultObj,
-                            submittedByUid: resultObj.submittedByUid || window.cloudSync.uid || "anonymous",
-                            syncedAt: Date.now()
-                        });
-                        await setDoc(resDocRef, payload);
+                        await Promise.all(subjectsArr.map(s => window.cloudSync.saveSubject(s)));
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menyimpan hasil ke Cloud:", err);
-                        return { ok: false, error: err?.message || "Koneksi terputus atau izin ditolak" };
+                        return { ok: false, error: err };
+                    }
+                };
+
+                window.cloudSync.saveResult = async (resultRecord) => {
+                    if (!resultRecord || !resultRecord.id) return { ok: false, code: "invalid-record" };
+                    try {
+                        const resDocRef = doc(resultsColRef, String(resultRecord.id));
+                        const payload = sanitizeResultPayloadForFirestore(resultRecord);
+                        await setDoc(resDocRef, payload, { merge: true });
+                        window.cloudSync.lastError = null;
+                        return { ok: true };
+                    } catch (err) {
+                        const errCode = err?.code || "unknown";
+                        const errMsg = err?.message || String(err);
+                        window.cloudSync.lastError = { code: errCode, message: errMsg };
+                        console.warn("Gagal mengirim hasil ujian ke Cloud:", errCode, errMsg);
+                        return { ok: false, code: errCode, message: errMsg, error: err };
                     }
                 };
 
                 window.cloudSync.deleteResult = async (resultId) => {
+                    if (!resultId) return { ok: false };
                     try {
-                        const resDocRef = doc(resultsColRef, String(resultId));
-                        await deleteDoc(resDocRef);
+                        await deleteDoc(doc(resultsColRef, String(resultId)));
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menghapus hasil dari Cloud:", err);
-                        return { ok: false };
+                        return { ok: false, error: err };
                     }
                 };
 
                 window.cloudSync.deleteAllResults = async () => {
                     try {
-                        const snapshot = await getDocs(resultsColRef);
-                        const promises = [];
-                        snapshot.forEach((d) => promises.push(deleteDoc(doc(resultsColRef, d.id))));
-                        await Promise.all(promises);
+                        const snap = await getDocs(resultsColRef);
+                        const deletes = [];
+                        snap.forEach(d => deletes.push(deleteDoc(d.ref)));
+                        await Promise.all(deletes);
                         return { ok: true };
                     } catch (err) {
-                        console.warn("Gagal menghapus seluruh hasil dari Cloud:", err);
-                        return { ok: false };
+                        return { ok: false, error: err };
                     }
                 };
 
-                // Muat ulang konfigurasi & seluruh mata pelajaran dari Cloud (dipanggil saat Guru/Operator masuk)
+                window.cloudSync.refreshResults = async (allowedSubjectIds = null) => {
+                    try {
+                        const fetched = [];
+                        if (Array.isArray(allowedSubjectIds) && allowedSubjectIds.length > 0 && allowedSubjectIds.length <= 30) {
+                            const chunks = [];
+                            for (let i = 0; i < allowedSubjectIds.length; i += 10) {
+                                chunks.push(allowedSubjectIds.slice(i, i + 10));
+                            }
+                            const snaps = await Promise.all(
+                                chunks.map(ch => getDocs(query(resultsColRef, where("subjectId", "in", ch))))
+                            );
+                            snaps.forEach(snap => {
+                                snap.forEach(d => fetched.push({ id: d.id, ...d.data() }));
+                            });
+                        } else {
+                            const snap = await getDocs(resultsColRef);
+                            snap.forEach(d => fetched.push({ id: d.id, ...d.data() }));
+                        }
+                        if (typeof window.mergeCloudResults === "function") {
+                            window.mergeCloudResults(fetched);
+                        }
+                    } catch (err) {
+                        console.warn("Gagal memuat rekap hasil dari Cloud:", err);
+                    }
+                };
+
                 window.cloudSync.refreshAllState = async () => {
                     try {
                         const [cfgSnap, subjSnap] = await Promise.all([
                             getDoc(configDocRef),
                             getDocs(subjectsColRef)
                         ]);
-                        const cloudSubjects = [];
-                        subjSnap.forEach((d) => cloudSubjects.push(d.data()));
                         if (cfgSnap.exists() && typeof window.applyCloudData === "function") {
-                            window.applyCloudData({
-                                ...cfgSnap.data(),
-                                subjects: cloudSubjects,
-                                _allowEmptySubjects: true
-                            });
-                        } else if (typeof window.applyCloudSubjects === "function") {
-                            window.applyCloudSubjects(cloudSubjects, true);
+                            window.applyCloudData({ ...cfgSnap.data(), _ignoreSubjects: true });
+                        }
+                        const loadedSubjs = [];
+                        subjSnap.forEach(d => loadedSubjs.push({ id: d.id, ...d.data() }));
+                        if (loadedSubjs.length > 0 && typeof window.applyCloudSubjects === "function") {
+                            window.applyCloudSubjects(loadedSubjs, false);
                         }
                     } catch (err) {
                         console.warn("Gagal menyegarkan data dari Cloud:", err);
                     }
                 };
 
-                // Ambil rekap hasil dari Cloud (mendukung filter per daftar subjectId guru agar hemat kuota)
-                window.cloudSync.refreshResults = async (allowedSubjectIds = null) => {
+                window.cloudSync.checkStudentAlreadyDone = async (nisn, subjectId) => {
                     try {
-                        const cloudResults = [];
-                        if (Array.isArray(allowedSubjectIds) && allowedSubjectIds.length > 0) {
-                            // Query per batch 10 ID (batas operator 'in' di Firestore)
-                            for (let i = 0; i < allowedSubjectIds.length; i += 10) {
-                                const chunk = allowedSubjectIds.slice(i, i + 10);
-                                const q = query(resultsColRef, where("subjectId", "in", chunk));
-                                const snap = await getDocs(q);
-                                snap.forEach((d) => cloudResults.push(d.data()));
-                            }
-                        } else if (Array.isArray(allowedSubjectIds) && allowedSubjectIds.length === 0) {
-                            // Guru tidak memiliki mapel yang ditugaskan
-                        } else {
-                            const snapshot = await getDocs(resultsColRef);
-                            snapshot.forEach((d) => cloudResults.push(d.data()));
-                        }
-                        if (typeof window.mergeCloudResults === "function") {
-                            window.mergeCloudResults(cloudResults);
-                        }
-                    } catch (err) {
-                        console.warn("Gagal mengambil rekap hasil dari Cloud:", err);
-                    }
-                };
-
-                // Cek spesifik 1 dokumen hasil ujian siswa berdasarkan ID deterministik
-                window.cloudSync.checkStudentAlreadyDone = async (subjectId, className, nisn) => {
-                    try {
-                        const cleanClass = String(className || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-                        const cleanNisn = String(nisn || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-                        if (cleanNisn.length < 3) return false;
-                        const detId = `res_${subjectId}_${cleanClass}_${cleanNisn}`;
-                        const snap = await getDoc(doc(resultsColRef, detId));
-                        return snap.exists();
+                        const norm = String(nisn || "").trim().replace(/\s+/g, "").toUpperCase();
+                        if (!norm || !subjectId) return false;
+                        const qSnap = await getDocs(
+                            query(
+                                resultsColRef,
+                                where("nisnNormalized", "==", norm),
+                                where("subjectId", "==", String(subjectId))
+                            )
+                        );
+                        return !qSnap.empty;
                     } catch (err) {
                         return false;
                     }
                 };
 
-                // Muat konfigurasi awal & koleksi mata pelajaran
-                const initialSnap = await getDoc(configDocRef);
-                const initialSubjectsSnap = await getDocs(subjectsColRef);
-                const cloudSubjects = [];
-                initialSubjectsSnap.forEach((d) => cloudSubjects.push(d.data()));
-
-                if (initialSnap.exists()) {
-                    const data = initialSnap.data();
-                    const hasLegacySubjects = Array.isArray(data.subjects) && data.subjects.length > 0;
-                    const mergedPayload = {
-                        ...data,
-                        subjects: hasLegacySubjects && cloudSubjects.length === 0 ? data.subjects : cloudSubjects,
-                        _allowEmptySubjects: true
-                    };
-                    if (typeof window.applyCloudData === "function") {
-                        window.applyCloudData(mergedPayload);
+                window.cloudSync.setSubjectsRealtime = (shouldListen) => {
+                    if (shouldListen && !subjectsRealtimeUnsub) {
+                        subjectsRealtimeUnsub = onSnapshot(subjectsColRef, (snap) => {
+                            const list = [];
+                            snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+                            if (typeof window.applyCloudSubjects === "function") {
+                                window.applyCloudSubjects(list, false);
+                            }
+                        }, (err) => {
+                            console.warn("Listener real-time mata pelajaran:", err);
+                        });
+                    } else if (!shouldListen && subjectsRealtimeUnsub) {
+                        subjectsRealtimeUnsub();
+                        subjectsRealtimeUnsub = null;
                     }
-                    // Migrasi otomatis: pindahkan subjects lama ke cbt_subjects lalu hapus field subjects dari main_config
-                    if (hasLegacySubjects) {
-                        if (cloudSubjects.length === 0) {
-                            await window.cloudSync.saveAllSubjects(data.subjects);
-                        }
-                        try {
-                            await setDoc(configDocRef, { subjects: deleteField() }, { merge: true });
-                        } catch (cleanErr) {
-                            console.warn("Pembersihan field subjects lama dilewati:", cleanErr);
-                        }
-                    }
-                    // Migrasi otomatis plain-text operatorPin ke operatorPinHash di Cloud
-                    if (data.config && data.config.operatorPin && typeof appState !== "undefined") {
-                        await window.cloudSync.saveConfig(appState);
-                    }
-                } else if (typeof appState !== "undefined") {
-                    await window.cloudSync.saveConfig(appState);
-                    await window.cloudSync.saveAllSubjects(appState.subjects);
-                }
+                };
 
-                // Kirim ulang antrean hasil ujian lokal yang sebelumnya sempat gagal terkirim
-                if (typeof window.syncPendingResultsQueue === "function") {
-                    window.syncPendingResultsQueue(true);
-                }
-
-                // Listener real-time untuk config (abaikan field subjects agar tidak menimpa cbt_subjects)
                 onSnapshot(configDocRef, (snap) => {
                     if (snap.exists() && typeof window.applyCloudData === "function") {
                         window.applyCloudData({ ...snap.data(), _ignoreSubjects: true });
@@ -2342,132 +2334,201 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                     console.warn("Listener real-time konfigurasi:", err);
                 });
 
-                // Listener real-time untuk mata pelajaran (termasuk saat seluruh mapel dihapus menjadi 0)
-                onSnapshot(subjectsColRef, (snapshot) => {
-                    const updatedSubjects = [];
-                    snapshot.forEach((d) => updatedSubjects.push(d.data()));
-                    if (typeof window.applyCloudSubjects === "function") {
-                        window.applyCloudSubjects(updatedSubjects, true);
-                    }
-                }, (err) => {
-                    console.warn("Listener real-time mata pelajaran:", err);
-                });
+                window.cloudSync.setSubjectsRealtime(true);
+                await window.cloudSync.refreshAllState();
+
+                if (typeof window.syncPendingResultsQueue === "function") {
+                    window.syncPendingResultsQueue(true);
+                }
+
+                resolveCloudReady(true);
+                return true;
             } catch (err) {
                 console.warn("Mode offline lokal digunakan:", err);
+                window.cloudSync.enabled = false;
+                window.cloudSync.lastError = { code: err?.code || "init-error", message: err?.message || String(err) };
                 if (typeof window.updateCloudStatusBadge === "function") {
                     window.updateCloudStatusBadge(false);
                 }
+                resolveCloudReady(false);
+                return false;
             }
         }
 
+        window.cloudSync.reinit = initCloudSync;
         initCloudSync();
     </script>
 
     <!-- ==================== LOGIKA UTAMA APLIKASI CBT ==================== -->
     <script>
         const STORAGE_KEY = "cbt_app_storage_v1";
-        const EXAM_SESSION_KEY = "cbt_app_active_session_v1";
-        const PENDING_RESULTS_KEY = "cbt_app_pending_results_v1";
+        const EXAM_SESSION_KEY = "cbt_active_exam_session_v1";
+        const PENDING_RESULTS_KEY = "cbt_pending_results_queue_v1";
 
-        // Implementasi SHA-256 standar (FIPS 180-4) untuk keamanan hash PIN tanpa bergantung pada HTTPS/crypto.subtle
-        function sha256Hex(message) {
-            const msgBytes = new TextEncoder().encode(String(message));
-            const K = [
-                0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-                0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-                0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-                0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-                0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-                0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-                0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-                0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-            ];
-            const H = [
-                0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-            ];
-            const bitLen = msgBytes.length * 8;
-            const paddedLen = Math.ceil((msgBytes.length + 9) / 64) * 64;
-            const padded = new Uint8Array(paddedLen);
-            padded.set(msgBytes);
-            padded[msgBytes.length] = 0x80;
-            const view = new DataView(padded.buffer);
-            view.setUint32(paddedLen - 8, Math.floor(bitLen / 0x100000000), false);
-            view.setUint32(paddedLen - 4, bitLen >>> 0, false);
+        // Implementasi SHA-256 mandiri agar hashing PIN berjalan baik di HTTP/LAN maupun file://
+        function sha256Hex(ascii) {
+            const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
+            const mathPow = Math.pow;
+            const maxWord = mathPow(2, 32);
+            let result = "";
+            const words = [];
+            const encoded = unescape(encodeURIComponent(String(ascii ?? "")));
+            const asciiBitLength = encoded.length * 8;
 
-            const W = new Uint32Array(64);
-            const rotr = (x, n) => (x >>> n) | (x << (32 - n));
-
-            for (let offset = 0; offset < paddedLen; offset += 64) {
-                for (let i = 0; i < 16; i++) {
-                    W[i] = view.getUint32(offset + i * 4, false);
+            const hash = [];
+            const k = [];
+            let primeCounter = 0;
+            const isComposite = {};
+            for (let candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (let i = 0; i < 313; i += candidate) {
+                        isComposite[i] = candidate;
+                    }
+                    hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
                 }
-                for (let i = 16; i < 64; i++) {
-                    const s0 = rotr(W[i - 15], 7) ^ rotr(W[i - 15], 18) ^ (W[i - 15] >>> 3);
-                    const s1 = rotr(W[i - 2], 17) ^ rotr(W[i - 2], 19) ^ (W[i - 2] >>> 10);
-                    W[i] = (W[i - 16] + s0 + W[i - 7] + s1) >>> 0;
-                }
-                let [a, b, c, d, e, f, g, h] = H;
-                for (let i = 0; i < 64; i++) {
-                    const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-                    const ch = (e & f) ^ (~e & g);
-                    const temp1 = (h + S1 + ch + K[i] + W[i]) >>> 0;
-                    const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-                    const maj = (a & b) ^ (a & c) ^ (b & c);
-                    const temp2 = (S0 + maj) >>> 0;
-                    h = g; g = f; f = e; e = (d + temp1) >>> 0;
-                    d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
-                }
-                H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0;
-                H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
-                H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0;
-                H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
             }
-            return H.map(v => v.toString(16).padStart(8, "0")).join("");
+
+            let paddedStr = encoded + "\x80";
+            while ((paddedStr.length % 64) - 56) paddedStr += "\x00";
+            for (let i = 0; i < paddedStr.length; i++) {
+                const j = paddedStr.charCodeAt(i);
+                words[i >> 2] |= j << (((3 - i) % 4) * 8);
+            }
+            words[words.length] = (asciiBitLength / maxWord) | 0;
+            words[words.length] = asciiBitLength;
+
+            for (let j = 0; j < words.length;) {
+                const w = words.slice(j, (j += 16));
+                const oldHash = hash.slice(0);
+                for (let i = 0; i < 64; i++) {
+                    const w15 = w[i - 15];
+                    const w2 = w[i - 2];
+                    const a = hash[0];
+                    const e = hash[4];
+                    const temp1 = hash[7] +
+                        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+                        ((e & hash[5]) ^ (~e & hash[6])) +
+                        k[i] +
+                        (w[i] = i < 16
+                            ? w[i]
+                            : (w[i - 16] +
+                                (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                                w[i - 7] +
+                                (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+                    const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+                        ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                    hash.unshift((temp1 + temp2) | 0);
+                    hash[4] = (hash[4] + temp1) | 0;
+                    hash.pop();
+                }
+                for (let i = 0; i < 8; i++) {
+                    hash[i] = (hash[i] + oldHash[i]) | 0;
+                }
+            }
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 3; j + 1; j--) {
+                    const b = (hash[i] >> (j * 8)) & 255;
+                    result += (b < 16 ? "0" : "") + b.toString(16);
+                }
+            }
+            return result;
         }
 
         function hashOperatorPin(pin) {
-            return sha256Hex("cbt_mu_op_pin_v1:" + String(pin || "").trim());
+            return sha256Hex("CBT_MU_PIN_SALT_V1::" + String(pin || "").trim());
         }
 
-        function normalizeNisn(str) {
-            return String(str || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        function normalizeNisn(nisn) {
+            return String(nisn || "").trim().replace(/\s+/g, "").toUpperCase();
         }
 
-        function normalizeClassKey(str) {
-            return String(str || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        function normalizeClassKey(className) {
+            return String(className || "").trim().replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
         }
 
         function getTodayIsoDate() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, "0");
-            const d = String(now.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         }
 
-        function formatDisplayDate(isoStr) {
-            if (!isoStr) return "Belum diatur";
-            const parts = isoStr.split("-");
-            if (parts.length !== 3) return isoStr;
+        function formatDisplayDate(isoDate) {
+            if (!isoDate) return "Belum dijadwalkan";
+            const parts = String(isoDate).split("-");
+            if (parts.length !== 3) return isoDate;
             const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
             const mIdx = parseInt(parts[1], 10) - 1;
             return `${parts[2]} ${months[mIdx] || parts[1]} ${parts[0]}`;
         }
 
+        // Pemuatan pustaka KaTeX & SheetJS (Excel) secara on-demand untuk mempercepat waktu muat awal
+        let katexLoadPromise = null;
+        function ensureKatexLoaded() {
+            if (typeof window.renderMathInElement === "function") {
+                return Promise.resolve(true);
+            }
+            if (katexLoadPromise) return katexLoadPromise;
+            katexLoadPromise = new Promise((resolve) => {
+                const s1 = document.createElement("script");
+                s1.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+                s1.defer = true;
+                s1.onload = () => {
+                    const s2 = document.createElement("script");
+                    s2.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+                    s2.defer = true;
+                    s2.onload = () => resolve(true);
+                    s2.onerror = () => { katexLoadPromise = null; resolve(false); };
+                    document.head.appendChild(s2);
+                };
+                s1.onerror = () => { katexLoadPromise = null; resolve(false); };
+                document.head.appendChild(s1);
+            });
+            return katexLoadPromise;
+        }
+
+        let xlsxLoadPromise = null;
+        function ensureXlsxLoaded() {
+            if (typeof XLSX !== "undefined") return Promise.resolve(true);
+            if (xlsxLoadPromise) return xlsxLoadPromise;
+            xlsxLoadPromise = new Promise((resolve) => {
+                const script = document.createElement("script");
+                script.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+                script.async = true;
+                script.onload = () => resolve(typeof XLSX !== "undefined");
+                script.onerror = () => { xlsxLoadPromise = null; resolve(false); };
+                document.head.appendChild(script);
+            });
+            return xlsxLoadPromise;
+        }
+
+        function hasMathDelimiters(el) {
+            if (!el) return false;
+            const txt = el.textContent || "";
+            return txt.indexOf("$") !== -1 || txt.indexOf("\\(") !== -1 || txt.indexOf("\\[") !== -1;
+        }
+
         function renderMathInElementSafe(el) {
-            if (!el || typeof window.renderMathInElement !== "function") return;
-            try {
-                window.renderMathInElement(el, {
-                    delimiters: [
-                        { left: "$$", right: "$$", display: true },
-                        { left: "$", right: "$", display: false },
-                        { left: "\\(", right: "\\)", display: false },
-                        { left: "\\[", right: "\\]", display: true }
-                    ],
-                    throwOnError: false
-                });
-            } catch (e) {}
+            if (!el || !hasMathDelimiters(el)) return;
+            const runRender = () => {
+                if (typeof window.renderMathInElement !== "function") return;
+                try {
+                    window.renderMathInElement(el, {
+                        delimiters: [
+                            { left: "$$", right: "$$", display: true },
+                            { left: "$", right: "$", display: false },
+                            { left: "\\(", right: "\\)", display: false },
+                            { left: "\\[", right: "\\]", display: true }
+                        ],
+                        throwOnError: false
+                    });
+                } catch (e) {}
+            };
+            if (typeof window.renderMathInElement === "function") {
+                runRender();
+            } else {
+                ensureKatexLoaded().then(ok => { if (ok) runRender(); });
+            }
         }
 
         window.rerenderVisibleMath = function () {
@@ -2716,11 +2777,15 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         let verifiedStudentClass = "";
         let activeExamSession = null;
         let examTimerInterval = null;
-        let examAutoSaveInterval = null;
+        let examAutoSaveTickCounter = 0;
+        let examSessionDirty = false;
         let examTextDebounceTimer = null;
         let examPassageCollapsed = false;
         let lastPassageIdRendered = null;
+        let lastRenderedQuestionKey = null;
         let examFontScale = 100;
+        let lastSavedAppStateSerialized = "";
+        const examAuthoritativeQuestionsMap = new Map();
 
         function loadAppState() {
             const def = buildDefaultState();
@@ -2783,7 +2848,11 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         function saveAppState(syncOpts = false) {
             try {
                 const snapshot = buildSanitizedLocalStorageSnapshot();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+                const serialized = JSON.stringify(snapshot);
+                if (serialized !== lastSavedAppStateSerialized) {
+                    localStorage.setItem(STORAGE_KEY, serialized);
+                    lastSavedAppStateSerialized = serialized;
+                }
             } catch (err) {
                 console.warn("Penyimpanan lokal penuh atau dibatasi browser:", err);
                 showToast("Peringatan: Penyimpanan lokal browser penuh. Kurangi ukuran gambar jika perlu.", "warning");
@@ -2853,6 +2922,13 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         window.applyCloudSubjects = function (subjectsArr, allowEmpty = false) {
             if (!Array.isArray(subjectsArr)) return;
             if (subjectsArr.length === 0 && !allowEmpty) return;
+
+            // Simpan salinan otoritatif soal di memori untuk penilaian otomatis saat ujian selesai
+            subjectsArr.forEach(s => {
+                (s.questions || []).forEach(q => {
+                    if (q && q.id) examAuthoritativeQuestionsMap.set(q.id, { ...q });
+                });
+            });
 
             appState.subjects = subjectsArr;
             saveAppState(false);
@@ -2938,54 +3014,84 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 updateWelcomeUnsyncedBanner();
                 return;
             }
-            if (!window.cloudSync || !window.cloudSync.enabled) {
-                if (!silent) showToast("Koneksi server Cloud belum aktif. Periksa jaringan internet Anda.", "warning");
-                return;
+
+            const syncBtn = document.getElementById("btn-welcome-sync-now");
+            if (syncBtn) {
+                syncBtn.disabled = true;
+                syncBtn.textContent = "Mengirim ke Server...";
             }
 
-            let syncedCount = 0;
-            for (const rec of [...queue]) {
-                const res = await window.cloudSync.saveResult(rec);
-                if (res && res.ok) {
-                    syncedCount++;
-                    removePendingResult(rec.id);
-                    const localRec = (appState.results || []).find(r => String(r.id) === String(rec.id));
-                    if (localRec) localRec.cloudSynced = true;
+            try {
+                if (window.cloudSync && !window.cloudSync.enabled) {
+                    await window.cloudSync.reinit();
                 }
+
+                if (!window.cloudSync || !window.cloudSync.enabled) {
+                    if (!silent) {
+                        showToast("Koneksi server Cloud belum aktif. Pastikan internet terhubung lalu coba lagi.", "warning");
+                    }
+                    return;
+                }
+
+                let syncedCount = 0;
+                let lastFailCode = "";
+                for (const rec of [...queue]) {
+                    const res = await window.cloudSync.saveResult(rec);
+                    if (res && res.ok) {
+                        syncedCount++;
+                        removePendingResult(rec.id);
+                        const localRec = (appState.results || []).find(r => String(r.id) === String(rec.id));
+                        if (localRec) localRec.cloudSynced = true;
+                    } else if (res && res.code) {
+                        lastFailCode = res.code;
+                    }
+                }
+
+                if (syncedCount > 0) {
+                    saveAppState(false);
+                    if (!silent) {
+                        showToast(`${syncedCount} lembar jawaban tertunda berhasil dikirim ke server.`, "success");
+                    }
+                } else if (!silent) {
+                    const hint = lastFailCode === "permission-denied"
+                        ? "Akses tulis Firestore ditolak (periksa Firestore Rules di Firebase Console)."
+                        : "Periksa koneksi internet atau matikan pemblokir skrip browser (Shields/AdBlock) lalu coba lagi.";
+                    showToast(`Pengiriman ke server belum berhasil. ${hint}`, "error");
+                }
+            } finally {
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = "Kirim Ulang ke Server Sekarang";
+                }
+                updateWelcomeUnsyncedBanner();
             }
-            if (syncedCount > 0) {
-                saveAppState(false);
-                if (!silent) showToast(`${syncedCount} lembar jawaban tertunda berhasil dikirim ke server.`, "success");
-            } else if (!silent) {
-                showToast("Pengiriman ke server belum berhasil. Periksa koneksi internet lalu coba lagi.", "error");
-            }
-            updateWelcomeUnsyncedBanner();
         };
 
-        // ==================== UTILITAS UMUM, GAMBAR & MODAL ====================
+        // Otomatis kirim ulang antrean hasil ujian begitu perangkat kembali terhubung ke internet
+        window.addEventListener("online", () => {
+            if (getPendingResultsQueue().length > 0) {
+                window.syncPendingResultsQueue(true);
+            }
+        });
+
+        setInterval(() => {
+            if (navigator.onLine !== false && getPendingResultsQueue().length > 0) {
+                window.syncPendingResultsQueue(true);
+            }
+        }, 20000);
+
+        // ==================== UTILITAS UMUM, MODAL & BRANDING ====================
         function escapeHtml(str) {
             return String(str ?? "")
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+                .replace(/'/g, "&#39;");
         }
 
-        function getQuestionTypeLabel(type) {
-            const map = {
-                single: "Pilihan Ganda",
-                complex: "Pilihan Ganda Kompleks",
-                truefalse: "Benar - Salah",
-                short: "Jawaban Singkat",
-                matching: "Mencocokkan",
-                essay: "Essay / Uraian"
-            };
-            return map[type] || "Pilihan Ganda";
-        }
-
-        let toastTimeoutId = null;
-        window.showToast = function (message, type = "info") {
+        let toastTimeout = null;
+        function showToast(message, type = "info") {
             const box = document.getElementById("toast-box");
             if (!box) return;
             const palette = {
@@ -2997,48 +3103,34 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             box.className = `fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold shadow-lg transition-all no-print ${palette[type] || palette.info}`;
             box.textContent = message;
             box.classList.remove("hidden");
-
-            if (toastTimeoutId) clearTimeout(toastTimeoutId);
-            toastTimeoutId = setTimeout(() => {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
                 box.classList.add("hidden");
-            }, 3600);
-        };
+            }, 3800);
+        }
 
         function copyTextSafe(text) {
             const val = String(text || "");
-            if (!val) return;
-            const fallbackCopy = () => {
-                const ta = document.createElement("textarea");
-                ta.value = val;
-                ta.style.position = "fixed";
-                ta.style.opacity = "0";
-                document.body.appendChild(ta);
-                ta.select();
-                try {
-                    document.execCommand("copy");
-                    showToast(`Kode "${val}" berhasil disalin.`, "success");
-                } catch (e) {
-                    showToast("Gagal menyalin teks otomatis.", "warning");
-                }
-                document.body.removeChild(ta);
-            };
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(val)
-                    .then(() => showToast(`Kode "${val}" berhasil disalin.`, "success"))
-                    .catch(fallbackCopy);
-            } else {
-                fallbackCopy();
+            const ta = document.createElement("textarea");
+            ta.value = val;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand("copy");
+                showToast(`Kode "${val}" berhasil disalin.`, "success");
+            } catch (e) {
+                showToast("Gagal menyalin teks.", "error");
             }
+            document.body.removeChild(ta);
         }
 
         function compressImageFile(file, maxWidth = 720, quality = 0.72) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onerror = () => reject(new Error("Gagal membaca file"));
                 reader.onload = (ev) => {
                     const img = new Image();
-                    img.onerror = () => reject(new Error("Format gambar tidak valid"));
                     img.onload = () => {
                         let w = img.width;
                         let h = img.height;
@@ -3050,60 +3142,32 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                         canvas.width = w;
                         canvas.height = h;
                         const ctx = canvas.getContext("2d");
-                        const isPng = file.type === "image/png";
-                        if (isPng) {
-                            const pngOut = canvas.toDataURL("image/png");
-                            // Jika PNG hasil kompresi masih > 180 KB, konversi ke JPEG berlatar putih agar aman dari limit 1 MB Firestore
-                            if (pngOut.length > 240000) {
-                                ctx.fillStyle = "#ffffff";
-                                ctx.fillRect(0, 0, w, h);
-                                ctx.drawImage(img, 0, 0, w, h);
-                                resolve(canvas.toDataURL("image/jpeg", quality));
-                            } else {
-                                ctx.drawImage(img, 0, 0, w, h);
-                                resolve(canvas.toDataURL("image/png"));
-                            }
-                        } else {
-                            ctx.drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL("image/jpeg", quality));
-                        }
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
+                        resolve(canvas.toDataURL(mime, quality));
                     };
+                    img.onerror = reject;
                     img.src = ev.target.result;
                 };
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
         }
 
-        function openImageLightbox(src) {
-            if (!src) return;
-            const modal = document.getElementById("modal-image-lightbox");
-            const img = document.getElementById("lightbox-img-target");
-            if (!modal || !img) return;
-            img.src = src;
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-        }
-
-        function closeImageLightbox() {
-            const modal = document.getElementById("modal-image-lightbox");
-            if (!modal) return;
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
-        }
-
         let genericConfirmCallback = null;
-        function openGenericConfirmModal(title, message, onConfirm, okLabel = "Ya, Hapus") {
+        function openGenericConfirmModal(title, message, onConfirm, okBtnLabel = "Ya, Hapus") {
+            const modal = document.getElementById("modal-generic-confirm");
+            if (!modal) return;
             document.getElementById("generic-confirm-title").textContent = title || "Konfirmasi Tindakan";
             document.getElementById("generic-confirm-message").textContent = message || "";
             const okBtn = document.getElementById("generic-confirm-ok-btn");
-            okBtn.textContent = okLabel;
-            genericConfirmCallback = onConfirm;
+            okBtn.textContent = okBtnLabel;
+            genericConfirmCallback = typeof onConfirm === "function" ? onConfirm : null;
             okBtn.onclick = () => {
                 const cb = genericConfirmCallback;
                 closeGenericConfirmModal();
-                if (typeof cb === "function") cb();
+                if (cb) cb();
             };
-            const modal = document.getElementById("modal-generic-confirm");
             modal.classList.remove("hidden");
             modal.classList.add("flex");
         }
@@ -3116,7 +3180,23 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             genericConfirmCallback = null;
         }
 
-        // ==================== IDENTITAS WEB & NAVIGASI HALAMAN ====================
+        function openImageLightbox(src) {
+            if (!src) return;
+            const modal = document.getElementById("modal-image-lightbox");
+            const target = document.getElementById("lightbox-img-target");
+            if (!modal || !target) return;
+            target.src = src;
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeImageLightbox() {
+            const modal = document.getElementById("modal-image-lightbox");
+            if (!modal) return;
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
         function applyWebBranding() {
             const cfg = appState.config || {};
             const schoolName = cfg.schoolName || "SMA Miftahul Ulum";
@@ -3126,39 +3206,38 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             const loginTitle = cfg.loginTitle || "Selamat Datang di Aplikasi Ujian Semester";
             const loginSubtitle = cfg.loginSubtitle || "Masukkan kode akses kelas Anda untuk melanjutkan ke pengisian data diri peserta.";
 
-            document.title = `CBT ${schoolName} - Ujian Akhir Semester`;
-            const headerSchool = document.getElementById("header-school-name");
-            const headerSub = document.getElementById("header-school-subtitle");
-            const headerSem = document.getElementById("header-semester-badge");
-            const welcomeSchool = document.getElementById("welcome-school-name");
-            const frontTitle = document.getElementById("login-title");
-            const frontSub = document.getElementById("login-subtitle");
-            const verEl = document.getElementById("frontpage-app-version");
+            document.title = `${schoolName} - Aplikasi Ujian Semester`;
+            const elHeaderName = document.getElementById("header-school-name");
+            const elHeaderSub = document.getElementById("header-school-subtitle");
+            const elHeaderBadge = document.getElementById("header-semester-badge");
+            const elWelcomeName = document.getElementById("welcome-school-name");
+            const elLoginTitle = document.getElementById("login-title");
+            const elLoginSub = document.getElementById("login-subtitle");
+            const elAppVer = document.getElementById("frontpage-app-version");
 
-            if (headerSchool) headerSchool.textContent = schoolName;
-            if (headerSub) headerSub.textContent = schoolSubtitle;
-            if (headerSem) headerSem.textContent = semesterBadge;
-            if (welcomeSchool) welcomeSchool.textContent = schoolName;
-            if (frontTitle) frontTitle.textContent = loginTitle;
-            if (frontSub) frontSub.textContent = loginSubtitle;
-            if (verEl) verEl.textContent = appVersion;
+            if (elHeaderName) elHeaderName.textContent = schoolName;
+            if (elHeaderSub) elHeaderSub.textContent = schoolSubtitle;
+            if (elHeaderBadge) elHeaderBadge.textContent = semesterBadge;
+            if (elWelcomeName) elWelcomeName.textContent = schoolName;
+            if (elLoginTitle) elLoginTitle.textContent = loginTitle;
+            if (elLoginSub) elLoginSub.textContent = loginSubtitle;
+            if (elAppVer) elAppVer.textContent = appVersion;
 
-            // Logo Sekolah pada Header & Halaman Depan
-            const headerLogoBox = document.getElementById("header-logo-container");
+            const headerLogo = document.getElementById("header-logo-container");
             const frontLogoBox = document.getElementById("frontpage-school-logo-box");
             if (cfg.schoolLogoUrl) {
-                if (headerLogoBox) {
-                    headerLogoBox.className = "w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm shrink-0 overflow-hidden p-0.5";
-                    headerLogoBox.innerHTML = `<img src="${escapeHtml(cfg.schoolLogoUrl)}" alt="Logo Sekolah" class="w-full h-full object-contain">`;
+                if (headerLogo) {
+                    headerLogo.className = "w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm shrink-0 overflow-hidden p-1";
+                    headerLogo.innerHTML = `<img src="${escapeHtml(cfg.schoolLogoUrl)}" alt="Logo Sekolah" class="w-full h-full object-contain">`;
                 }
                 if (frontLogoBox) {
                     frontLogoBox.className = "w-16 h-16 mx-auto mb-3 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden p-1.5";
                     frontLogoBox.innerHTML = `<img src="${escapeHtml(cfg.schoolLogoUrl)}" alt="Logo Sekolah" class="w-full h-full object-contain">`;
                 }
             } else {
-                if (headerLogoBox) {
-                    headerLogoBox.className = "w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shadow-indigo-200 shrink-0 overflow-hidden";
-                    headerLogoBox.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>`;
+                if (headerLogo) {
+                    headerLogo.className = "w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shadow-indigo-200 shrink-0 overflow-hidden";
+                    headerLogo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>`;
                 }
                 if (frontLogoBox) {
                     frontLogoBox.className = "hidden";
@@ -3166,51 +3245,51 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 }
             }
 
-            // Tombol Portal Guru di Halaman Depan
-            const teacherBtn = document.getElementById("btn-header-teacher");
-            if (teacherBtn) {
-                teacherBtn.classList.toggle("hidden", cfg.showTeacherPortal === false);
+            const btnTeacher = document.getElementById("btn-header-teacher");
+            if (btnTeacher) {
+                btnTeacher.classList.toggle("hidden", cfg.showTeacherPortal === false);
             }
 
             updateFrontpageBackgroundLayer();
+            updateWelcomeUnsyncedBanner();
         }
 
         function updateFrontpageBackgroundLayer() {
-            const cfg = appState.config || {};
             const bgLayer = document.getElementById("frontpage-bg-layer");
             const bgOverlay = document.getElementById("frontpage-bg-overlay");
             if (!bgLayer || !bgOverlay) return;
 
-            const bgUrl = (cfg.loginBgUrl || "").trim();
-            const preset = cfg.loginBgPreset || "none";
-            const hasBg = Boolean(bgUrl) || preset !== "none";
+            const cfg = appState.config || {};
+            const isWelcome = currentScreen === "welcome";
+            const hasBg = Boolean(cfg.loginBgUrl) || (cfg.loginBgPreset && cfg.loginBgPreset !== "none");
 
-            if (currentScreen !== "welcome" || !hasBg) {
+            if (!isWelcome || !hasBg) {
                 bgLayer.classList.add("hidden");
                 return;
             }
 
             bgLayer.classList.remove("hidden");
-            if (bgUrl) {
-                bgLayer.style.backgroundImage = `url('${bgUrl.replace(/'/g, "\\'")}')`;
-            } else if (preset === "blue") {
+            if (cfg.loginBgUrl) {
+                bgLayer.style.backgroundImage = `url('${String(cfg.loginBgUrl).replace(/'/g, "\\'")}')`;
+            } else if (cfg.loginBgPreset === "blue") {
                 bgLayer.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #dbeafe 100%)";
-            } else if (preset === "emerald") {
+            } else if (cfg.loginBgPreset === "emerald") {
                 bgLayer.style.backgroundImage = "linear-gradient(135deg, #064e3b 0%, #10b981 50%, #d1fae5 100%)";
-            } else if (preset === "amber") {
+            } else if (cfg.loginBgPreset === "amber") {
                 bgLayer.style.backgroundImage = "linear-gradient(135deg, #78350f 0%, #f59e0b 50%, #fef3c7 100%)";
             }
 
             const overlayVal = Number(cfg.loginBgOverlay || 0);
             if (overlayVal < 0) {
-                bgOverlay.style.backgroundColor = `rgba(15, 23, 42, ${Math.min(0.85, Math.abs(overlayVal) / 100)})`;
+                bgOverlay.style.backgroundColor = `rgba(15, 23, 42, ${Math.abs(overlayVal) / 100})`;
             } else if (overlayVal > 0) {
-                bgOverlay.style.backgroundColor = `rgba(255, 255, 255, ${Math.min(0.85, overlayVal / 100)})`;
+                bgOverlay.style.backgroundColor = `rgba(255, 255, 255, ${overlayVal / 100})`;
             } else {
                 bgOverlay.style.backgroundColor = "transparent";
             }
         }
 
+        // ==================== NAVIGASI LAYAR & HEADER ====================
         function switchScreenInternal(screenName) {
             currentScreen = screenName;
             const screens = ["welcome", "login", "exam", "result", "teacher", "operator"];
@@ -3224,9 +3303,30 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 header.classList.toggle("hidden", screenName === "welcome");
             }
 
+            // Jeda listener real-time koleksi soal saat siswa mengerjakan ujian agar hemat bandwidth
+            if (window.cloudSync && typeof window.cloudSync.setSubjectsRealtime === "function") {
+                window.cloudSync.setSubjectsRealtime(screenName !== "exam");
+            }
+
             updateFrontpageBackgroundLayer();
             updateHeaderPrimaryButtonState();
             window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function goToScreen(screenName) {
+            if (screenName === "welcome") {
+                currentTeacher = null;
+                isOperatorAuthenticated = false;
+                if (examTimerInterval) {
+                    clearInterval(examTimerInterval);
+                    examTimerInterval = null;
+                }
+                activeExamSession = null;
+                exitExamFullscreenSafe();
+                checkAndRenderWelcomeResumeBanner();
+                updateWelcomeUnsyncedBanner();
+            }
+            switchScreenInternal(screenName);
         }
 
         function updateHeaderPrimaryButtonState() {
@@ -3237,26 +3337,22 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             if (!btn || !label) return;
 
             if (currentScreen === "exam") {
-                btn.classList.add("hidden");
-                return;
-            }
-            btn.classList.remove("hidden");
-
-            if (currentScreen === "teacher") {
-                if (currentTeacherTab !== "overview") {
-                    label.textContent = "Ringkasan Guru";
-                    if (iconHome) iconHome.classList.remove("hidden");
-                    if (iconLogout) iconLogout.classList.add("hidden");
-                } else {
-                    label.textContent = "Keluar Portal Guru";
-                    if (iconHome) iconHome.classList.add("hidden");
-                    if (iconLogout) iconLogout.classList.remove("hidden");
-                }
-            } else if (currentScreen === "operator") {
-                label.textContent = "Keluar Operator";
+                btn.className = "px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 shadow-sm font-bold text-xs sm:text-sm transition inline-flex items-center gap-1.5";
+                label.textContent = "Kumpulkan Ujian";
+                if (iconHome) iconHome.classList.add("hidden");
+                if (iconLogout) iconLogout.classList.add("hidden");
+            } else if (currentScreen === "teacher" && currentTeacherTab !== "overview") {
+                btn.className = "px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 shadow-sm font-semibold text-xs sm:text-sm transition inline-flex items-center gap-1.5";
+                label.textContent = "Beranda Guru";
+                if (iconHome) iconHome.classList.remove("hidden");
+                if (iconLogout) iconLogout.classList.add("hidden");
+            } else if (currentScreen === "teacher" || currentScreen === "operator") {
+                btn.className = "px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 shadow-sm font-semibold text-xs sm:text-sm transition inline-flex items-center gap-1.5";
+                label.textContent = "Keluar Portal";
                 if (iconHome) iconHome.classList.add("hidden");
                 if (iconLogout) iconLogout.classList.remove("hidden");
             } else {
+                btn.className = "px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white border border-slate-900 shadow-sm font-semibold text-xs sm:text-sm transition inline-flex items-center gap-1.5";
                 label.textContent = "Halaman Utama";
                 if (iconHome) iconHome.classList.remove("hidden");
                 if (iconLogout) iconLogout.classList.add("hidden");
@@ -3266,41 +3362,14 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         function handleHeaderPrimaryAction() {
             if (currentScreen === "exam") {
                 openSubmitConfirmModal();
-                return;
-            }
-            if (currentScreen === "teacher") {
-                if (currentTeacherTab !== "overview") {
-                    switchTeacherTab("overview");
-                    return;
-                }
-                currentTeacher = null;
+            } else if (currentScreen === "teacher" && currentTeacherTab !== "overview") {
+                switchTeacherTab("overview");
+            } else {
                 goToScreen("welcome");
-                return;
-            }
-            if (currentScreen === "operator") {
-                isOperatorAuthenticated = false;
-                goToScreen("welcome");
-                return;
-            }
-            goToScreen("welcome");
-        }
-
-        function goToScreen(screenName) {
-            if (currentScreen === "exam" && screenName !== "exam") {
-                stopExamTimer();
-                exitExamFullscreenSafe();
-            }
-            if (screenName === "welcome") {
-                currentTeacher = null;
-                isOperatorAuthenticated = false;
-            }
-            switchScreenInternal(screenName);
-            if (screenName === "welcome") {
-                checkAndRenderWelcomeResumeBanner();
             }
         }
 
-        // ==================== VERIFIKASI KODE AKSES & LOGIN PESERTA ====================
+        // ==================== ATURAN JADWAL & MATA PELAJARAN ====================
         function getActiveScheduleDate() {
             const override = (appState.config?.scheduleOverrideDate || "").trim();
             return override || getTodayIsoDate();
@@ -3308,71 +3377,75 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
 
         function isSubjectAvailableForClass(subj, className) {
             if (!subj) return false;
-            if (Array.isArray(subj.targetClasses) && subj.targetClasses.length > 0) {
-                return subj.targetClasses.includes(className);
+            if (subj.allClasses || !Array.isArray(subj.targetClasses) || subj.targetClasses.length === 0) {
+                return true;
             }
-            if (subj.allClasses === false) return false;
-            return true;
+            return subj.targetClasses.includes(className);
         }
 
-        function parseTimeOnDateToMs(isoDateStr, timeStr) {
-            const dateParts = String(isoDateStr || getTodayIsoDate()).split("-");
-            const timeParts = String(timeStr || "16:00").split(":");
-            const y = parseInt(dateParts[0], 10) || new Date().getFullYear();
-            const m = (parseInt(dateParts[1], 10) || 1) - 1;
-            const d = parseInt(dateParts[2], 10) || 1;
-            const hh = parseInt(timeParts[0], 10) || 0;
-            const mm = parseInt(timeParts[1], 10) || 0;
-            return new Date(y, m, d, hh, mm, 0, 0).getTime();
-        }
-
-        function checkSubjectScheduleEligibility(subj) {
+        function checkSubjectScheduleStatus(subj) {
             const cfg = appState.config || {};
-            if (!cfg.enforceSchedule && !cfg.enforceScheduleTime) {
+            if (!cfg.enforceSchedule) {
                 return { allowed: true, reason: "" };
             }
-
-            const activeDate = getActiveScheduleDate();
-            if (cfg.enforceSchedule) {
-                if (!subj.scheduleDate) {
-                    return { allowed: false, reason: "Jadwal ujian untuk mata pelajaran ini belum ditetapkan oleh Operator." };
-                }
-                if (subj.scheduleDate !== activeDate) {
-                    return {
-                        allowed: false,
-                        reason: `Ujian ini dijadwalkan pada tanggal ${formatDisplayDate(subj.scheduleDate)} (Tanggal sistem saat ini: ${formatDisplayDate(activeDate)}).`
-                    };
-                }
+            const today = getActiveScheduleDate();
+            if (!subj.scheduleDate) {
+                return { allowed: false, reason: "Mata pelajaran ini belum memiliki jadwal pelaksanaan." };
             }
-
+            if (subj.scheduleDate !== today) {
+                return {
+                    allowed: false,
+                    reason: `Ujian dijadwalkan pada ${formatDisplayDate(subj.scheduleDate)} (Hari ini: ${formatDisplayDate(today)}).`
+                };
+            }
             if (cfg.enforceScheduleTime) {
                 const now = new Date();
-                const nowMinutes = now.getHours() * 60 + now.getMinutes();
-                const startParts = (subj.startTime || "07:30").split(":");
-                const endParts = (subj.endTime || "16:00").split(":");
-                const startMin = (parseInt(startParts[0], 10) || 0) * 60 + (parseInt(startParts[1], 10) || 0);
-                const endMin = (parseInt(endParts[0], 10) || 23) * 60 + (parseInt(endParts[1], 10) || 59);
-
-                if (nowMinutes < startMin) {
-                    return { allowed: false, reason: `Sesi ujian belum dimulai. Ujian dibuka pukul ${subj.startTime || "07:30"}.` };
+                const nowMins = now.getHours() * 60 + now.getMinutes();
+                const [sh, sm] = String(subj.startTime || "00:00").split(":").map(Number);
+                const [eh, em] = String(subj.endTime || "23:59").split(":").map(Number);
+                const startMins = (sh || 0) * 60 + (sm || 0);
+                const endMins = (eh || 23) * 60 + (em || 59);
+                if (nowMins < startMins) {
+                    return { allowed: false, reason: `Sesi ujian baru dimulai pukul ${subj.startTime || "07:30"}.` };
                 }
-                if (nowMinutes >= endMin) {
+                if (nowMins > endMins) {
                     return { allowed: false, reason: `Waktu sesi ujian telah berakhir pada pukul ${subj.endTime || "16:00"}.` };
                 }
             }
-
             return { allowed: true, reason: "" };
         }
 
-        function verifyStudentAccessCode(e) {
+        function getQuestionTypeLabel(type) {
+            const labels = {
+                single: "Pilihan Ganda",
+                complex: "PG Kompleks",
+                truefalse: "Benar / Salah",
+                short: "Jawaban Singkat",
+                matching: "Menjodohkan",
+                essay: "Essay / Uraian"
+            };
+            return labels[type] || "Pilihan Ganda";
+        }
+
+        // ==================== LOGIN SISWA & PERSIAPAN UJIAN ====================
+        async function verifyStudentAccessCode(e) {
             if (e && e.preventDefault) e.preventDefault();
             const input = document.getElementById("student-access-code");
             const errEl = document.getElementById("student-code-error");
-            const rawCode = (input?.value || "").trim().toUpperCase();
+            const code = (input?.value || "").trim().toUpperCase();
 
-            const matched = (appState.studentCodes || []).find(c =>
-                c.active && String(c.code || "").trim().toUpperCase() === rawCode
+            if (!code) return;
+
+            let matched = (appState.studentCodes || []).find(c =>
+                c.active !== false && String(c.code || "").trim().toUpperCase() === code
             );
+
+            if (!matched && window.cloudSync && window.cloudSync.enabled) {
+                await window.cloudSync.refreshAllState();
+                matched = (appState.studentCodes || []).find(c =>
+                    c.active !== false && String(c.code || "").trim().toUpperCase() === code
+                );
+            }
 
             if (!matched) {
                 if (errEl) errEl.classList.remove("hidden");
@@ -3386,6 +3459,12 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             verifiedStudentCode = matched.code;
             verifiedStudentClass = matched.className;
 
+            const badge = document.getElementById("login-verified-class-badge");
+            if (badge) {
+                badge.textContent = `Kelas: ${matched.className}`;
+                badge.classList.remove("hidden");
+            }
+
             const classSel = document.getElementById("student-class");
             if (classSel) {
                 classSel.innerHTML = `<option value="${escapeHtml(matched.className)}">${escapeHtml(matched.className)}</option>`;
@@ -3393,24 +3472,18 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 classSel.disabled = true;
             }
 
-            const classBadge = document.getElementById("login-verified-class-badge");
-            if (classBadge) {
-                classBadge.textContent = `Kelas: ${matched.className}`;
-                classBadge.classList.remove("hidden");
-            }
-
-            refreshStudentSubjectDropdown();
             switchScreenInternal("login");
+            refreshStudentSubjectDropdown();
         }
 
         function refreshStudentSubjectDropdown() {
-            const cls = document.getElementById("student-class")?.value || verifiedStudentClass;
+            const className = document.getElementById("student-class")?.value || verifiedStudentClass;
             const subjSel = document.getElementById("student-subject");
             if (!subjSel) return;
 
-            const available = (appState.subjects || []).filter(s => isSubjectAvailableForClass(s, cls));
+            const available = (appState.subjects || []).filter(s => isSubjectAvailableForClass(s, className));
             if (available.length === 0) {
-                subjSel.innerHTML = `<option value="">-- Belum ada jadwal ujian untuk kelas ini --</option>`;
+                subjSel.innerHTML = `<option value="">-- Belum ada mata pelajaran tersedia --</option>`;
             } else {
                 subjSel.innerHTML = available.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.title)}</option>`).join("");
             }
@@ -3425,65 +3498,41 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
 
             if (!subj) {
                 document.getElementById("preview-schedule").textContent = "-";
-                document.getElementById("preview-q-count").textContent = "0 Soal";
+                document.getElementById("preview-q-count").textContent = "-";
                 document.getElementById("preview-duration").textContent = "-";
                 document.getElementById("preview-kkm").textContent = "-";
-                if (warnBox) {
-                    warnBox.textContent = "Belum ada mata pelajaran ujian yang tersedia untuk kelas Anda.";
-                    warnBox.classList.remove("hidden");
-                }
                 if (startBtn) startBtn.disabled = true;
                 return;
             }
 
             const activeQs = (subj.questions || []).filter(q => q.inExam !== false);
-            document.getElementById("preview-schedule").textContent = subj.scheduleDate ? formatDisplayDate(subj.scheduleDate) : "Fleksibel";
-            document.getElementById("preview-q-count").textContent = `${activeQs.length} Soal`;
+            document.getElementById("preview-schedule").textContent = formatDisplayDate(subj.scheduleDate);
+            document.getElementById("preview-q-count").textContent = `${activeQs.length} Butir`;
             document.getElementById("preview-duration").textContent = `${subj.durationMinutes || 60} Menit`;
             document.getElementById("preview-kkm").textContent = subj.kkm || 75;
 
+            const nisn = normalizeNisn(document.getElementById("student-nisn")?.value);
+            const alreadyDoneLocal = nisn && (appState.results || []).some(r =>
+                normalizeNisn(r.nisn) === nisn && r.subjectId === subj.id
+            );
+
+            const schedCheck = checkSubjectScheduleStatus(subj);
             if (activeQs.length === 0) {
-                if (warnBox) {
-                    warnBox.textContent = "Butir soal untuk mata pelajaran ini belum diaktifkan oleh guru.";
-                    warnBox.classList.remove("hidden");
-                }
+                warnBox.textContent = "Paket soal untuk mata pelajaran ini belum tersedia. Hubungi pengawas ujian.";
+                warnBox.classList.remove("hidden");
                 if (startBtn) startBtn.disabled = true;
-                return;
-            }
-
-            const schedCheck = checkSubjectScheduleEligibility(subj);
-            if (!schedCheck.allowed) {
-                if (warnBox) {
-                    warnBox.textContent = schedCheck.reason;
-                    warnBox.classList.remove("hidden");
-                }
+            } else if (!schedCheck.allowed) {
+                warnBox.textContent = schedCheck.reason;
+                warnBox.classList.remove("hidden");
                 if (startBtn) startBtn.disabled = true;
-                return;
+            } else if (alreadyDoneLocal) {
+                warnBox.textContent = "NISN ini tercatat sudah mengumpulkan ujian untuk mata pelajaran ini.";
+                warnBox.classList.remove("hidden");
+                if (startBtn) startBtn.disabled = true;
+            } else {
+                warnBox.classList.add("hidden");
+                if (startBtn) startBtn.disabled = false;
             }
-
-            const cls = document.getElementById("student-class")?.value || verifiedStudentClass;
-            const nisnVal = document.getElementById("student-nisn")?.value || "";
-            const cleanNisn = normalizeNisn(nisnVal);
-            const cleanClass = normalizeClassKey(cls);
-
-            if (cleanNisn.length >= 3) {
-                const alreadyLocal = (appState.results || []).some(r =>
-                    r.subjectId === subj.id &&
-                    normalizeClassKey(r.className) === cleanClass &&
-                    normalizeNisn(r.nisn) === cleanNisn
-                );
-                if (alreadyLocal) {
-                    if (warnBox) {
-                        warnBox.textContent = "Peserta dengan NISN tersebut sudah menyelesaikan mata pelajaran ini.";
-                        warnBox.classList.remove("hidden");
-                    }
-                    if (startBtn) startBtn.disabled = true;
-                    return;
-                }
-            }
-
-            if (warnBox) warnBox.classList.add("hidden");
-            if (startBtn) startBtn.disabled = false;
         }
 
         function shuffleArrayCopy(arr) {
@@ -3495,65 +3544,190 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             return copy;
         }
 
-        // Acak soal dengan tetap menjaga kelompok soal yang terikat pada teks bacaan yang sama agar berurutan
-        function buildStudentExamQuestions(activeQuestions, shouldShuffle) {
-            const cloned = JSON.parse(JSON.stringify(activeQuestions));
-            if (!shouldShuffle) return cloned;
+        function buildStudentExamQuestions(subj) {
+            const rawActive = (subj.questions || []).filter(q => q.inExam !== false);
+            rawActive.forEach(q => {
+                if (q && q.id) examAuthoritativeQuestionsMap.set(q.id, { ...q });
+            });
 
-            const blocks = [];
-            const passageBlockMap = new Map();
+            let ordered = rawActive.map(q => ({ ...q }));
 
-            cloned.forEach(q => {
-                if (q.passageId) {
-                    if (!passageBlockMap.has(q.passageId)) {
-                        const group = [];
-                        passageBlockMap.set(q.passageId, group);
-                        blocks.push(group);
+            // Acak soal dengan tetap menjaga kelompok soal ber-wacana (passageId) dalam satu kesatuan
+            if (subj.shuffleQuestions) {
+                const blocks = [];
+                const passageBlockMap = new Map();
+                ordered.forEach(q => {
+                    if (q.passageId) {
+                        if (!passageBlockMap.has(q.passageId)) {
+                            const blk = [];
+                            passageBlockMap.set(q.passageId, blk);
+                            blocks.push(blk);
+                        }
+                        passageBlockMap.get(q.passageId).push(q);
+                    } else {
+                        blocks.push([q]);
                     }
-                    passageBlockMap.get(q.passageId).push(q);
-                } else {
-                    blocks.push([q]);
-                }
-            });
+                });
+                ordered = shuffleArrayCopy(blocks).flat();
+            }
 
-            return shuffleArrayCopy(blocks).flat();
+            // Acak opsi pilihan (A-E) jika diaktifkan guru, sambil memetakan kembali kunci jawaban
+            if (subj.shuffleOptions) {
+                ordered = ordered.map(q => {
+                    if ((q.type === "single" || q.type === "complex") && Array.isArray(q.options) && q.options.length > 1) {
+                        const indexed = q.options.map((optText, origIdx) => ({ optText, origIdx }));
+                        const shuffled = shuffleArrayCopy(indexed);
+                        const newOpts = shuffled.map(item => item.optText);
+                        if (q.type === "single") {
+                            const newCorrect = shuffled.findIndex(item => item.origIdx === Number(q.correctIndex || 0));
+                            return { ...q, options: newOpts, correctIndex: Math.max(0, newCorrect) };
+                        } else {
+                            const origSet = new Set((q.correctIndices || []).map(Number));
+                            const newIndices = [];
+                            shuffled.forEach((item, newIdx) => {
+                                if (origSet.has(item.origIdx)) newIndices.push(newIdx);
+                            });
+                            return { ...q, options: newOpts, correctIndices: newIndices };
+                        }
+                    }
+                    return q;
+                });
+            }
+
+            return ordered;
         }
 
-        // ==================== PENYIMPANAN & PEMULIHAN SESI UJIAN LOKAL ====================
-        function saveExamSessionToCache() {
-            if (!activeExamSession) return;
+        async function handleStudentLogin(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const studentName = (document.getElementById("student-name")?.value || "").trim();
+            const nisn = (document.getElementById("student-nisn")?.value || "").trim();
+            const className = document.getElementById("student-class")?.value || verifiedStudentClass;
+            const subjId = document.getElementById("student-subject")?.value;
+            const subj = (appState.subjects || []).find(s => s.id === subjId);
+
+            if (!studentName || !nisn || !subj) return;
+
+            const startBtn = document.getElementById("btn-start-exam");
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = "Memeriksa Data Peserta...";
+            }
+
             try {
-                // Simpan sesi tanpa menyertakan kunci jawaban di localStorage agar tidak bisa diintip siswa via DevTools
-                const safeSession = {
-                    ...activeExamSession,
-                    questions: (activeExamSession.questions || []).map(stripAnswerKeysFromQuestion)
+                if (window.cloudSync && window.cloudSync.enabled) {
+                    const doneCloud = await window.cloudSync.checkStudentAlreadyDone(nisn, subj.id);
+                    if (doneCloud) {
+                        showToast("Peserta dengan NISN ini sudah mengumpulkan ujian untuk mata pelajaran ini.", "error");
+                        updateSubjectPreviewCard();
+                        return;
+                    }
+                }
+
+                const examQuestions = buildStudentExamQuestions(subj);
+                if (examQuestions.length === 0) {
+                    showToast("Soal ujian belum tersedia.", "warning");
+                    return;
+                }
+
+                let durationMs = Math.max(1, Number(subj.durationMinutes || 60)) * 60 * 1000;
+                // Potong sisa waktu jika kebijakan jam selesai sesi aktif
+                if (appState.config?.enforceSchedule && appState.config?.enforceScheduleTime && subj.endTime) {
+                    const [eh, em] = String(subj.endTime).split(":").map(Number);
+                    const endObj = new Date();
+                    endObj.setHours(eh || 23, em || 59, 0, 0);
+                    const msUntilSessionEnd = endObj.getTime() - Date.now();
+                    if (msUntilSessionEnd > 15000 && msUntilSessionEnd < durationMs) {
+                        durationMs = msUntilSessionEnd;
+                    }
+                }
+
+                const sessionObj = {
+                    studentName,
+                    nisn,
+                    className,
+                    accessCodeUsed: verifiedStudentCode,
+                    subjectId: subj.id,
+                    subjectTitle: subj.title,
+                    kkm: Number(subj.kkm || 75),
+                    showScore: subj.showScore !== false,
+                    showReview: subj.showReview !== false,
+                    questions: examQuestions,
+                    passages: subj.passages || [],
+                    answers: {},
+                    doubts: {},
+                    proctorLogs: [],
+                    currentIndex: 0,
+                    startedAt: Date.now(),
+                    endTimeMs: Date.now() + durationMs
                 };
-                localStorage.setItem(EXAM_SESSION_KEY, JSON.stringify(safeSession));
-            } catch (e) {}
+
+                startExamSession(sessionObj);
+            } finally {
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.textContent = "Mulai Mengerjakan Ujian →";
+                }
+            }
         }
 
-        function rehydrateSessionQuestionsFromSubject(sessionObj) {
-            if (!sessionObj || !Array.isArray(sessionObj.questions)) return sessionObj;
-            const subj = (appState.subjects || []).find(s => s.id === sessionObj.subjectId);
-            if (!subj || !Array.isArray(subj.questions)) return sessionObj;
-
-            const bankMap = new Map(subj.questions.map(q => [q.id, q]));
-            sessionObj.questions = sessionObj.questions.map(sq => {
-                const authoritative = bankMap.get(sq.id);
-                return authoritative ? JSON.parse(JSON.stringify(authoritative)) : sq;
-            });
-            return sessionObj;
-        }
-
-        function loadSavedExamSession() {
+        // ==================== SESI PENGERJAAN UJIAN & AUTO-SAVE ====================
+        function checkAndRenderWelcomeResumeBanner() {
+            const banner = document.getElementById("welcome-resume-banner");
+            const meta = document.getElementById("welcome-resume-meta");
+            if (!banner) return;
             try {
                 const raw = localStorage.getItem(EXAM_SESSION_KEY);
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                return rehydrateSessionQuestionsFromSubject(parsed);
+                if (!raw) {
+                    banner.classList.add("hidden");
+                    return;
+                }
+                const saved = JSON.parse(raw);
+                if (!saved || !saved.studentName || !Array.isArray(saved.questions) || saved.questions.length === 0) {
+                    banner.classList.add("hidden");
+                    return;
+                }
+                if (meta) {
+                    meta.textContent = `${saved.studentName} (${saved.className}) • ${saved.subjectTitle}`;
+                }
+                banner.classList.remove("hidden");
             } catch (e) {
-                return null;
+                banner.classList.add("hidden");
             }
+        }
+
+        function resumeSavedSessionFromWelcome() {
+            try {
+                const raw = localStorage.getItem(EXAM_SESSION_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (!saved || !Array.isArray(saved.questions)) return;
+                startExamSession(saved);
+                showToast("Sesi ujian sebelumnya berhasil dipulihkan.", "info");
+            } catch (e) {
+                showToast("Gagal memulihkan sesi tersimpan.", "error");
+            }
+        }
+
+        function discardSavedSessionFromWelcome() {
+            openGenericConfirmModal(
+                "Abaikan Sesi Tertunda?",
+                "Data sesi ujian yang belum selesai di perangkat ini akan dihapus.",
+                () => {
+                    clearSavedExamSession();
+                    checkAndRenderWelcomeResumeBanner();
+                    showToast("Sesi tertunda dihapus.", "info");
+                },
+                "Ya, Hapus Sesi"
+            );
+        }
+
+        function persistActiveExamSession(force = false) {
+            if (!activeExamSession) return;
+            if (!force && !examSessionDirty) return;
+            try {
+                localStorage.setItem(EXAM_SESSION_KEY, JSON.stringify(activeExamSession));
+                examSessionDirty = false;
+            } catch (e) {}
         }
 
         function clearSavedExamSession() {
@@ -3562,508 +3736,89 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             } catch (e) {}
         }
 
-        function checkAndRenderWelcomeResumeBanner() {
-            const banner = document.getElementById("welcome-resume-banner");
-            const meta = document.getElementById("welcome-resume-meta");
-            if (!banner) return;
-
-            const saved = loadSavedExamSession();
-            if (saved && !saved.submitted && Array.isArray(saved.questions) && saved.questions.length > 0) {
-                const remSec = Math.max(0, Math.floor(((saved.endTimestamp || 0) - Date.now()) / 1000));
-                if (remSec <= 0) {
-                    activeExamSession = saved;
-                    finishExam(true, { stayOnCurrentScreen: true });
-                    banner.classList.add("hidden");
-                    showToast("Sesi ujian sebelumnya telah habis waktunya dan otomatis dikumpulkan.", "info");
-                    updateWelcomeUnsyncedBanner();
-                    return;
-                }
-                const mins = Math.ceil(remSec / 60);
-                if (meta) {
-                    meta.textContent = `${saved.studentName} (${saved.className}) • ${saved.subjectTitle} • Sisa ±${mins} menit`;
-                }
-                banner.classList.remove("hidden");
-            } else {
-                banner.classList.add("hidden");
-            }
-            updateWelcomeUnsyncedBanner();
-        }
-
-        function resumeSavedSessionFromWelcome() {
-            const saved = loadSavedExamSession();
-            if (!saved || saved.submitted) {
-                checkAndRenderWelcomeResumeBanner();
-                return;
-            }
-            const remSec = Math.max(0, Math.floor(((saved.endTimestamp || 0) - Date.now()) / 1000));
-            if (remSec <= 0) {
-                activeExamSession = saved;
-                finishExam(true);
-                return;
-            }
-            activeExamSession = saved;
+        function startExamSession(sessionObj) {
+            activeExamSession = sessionObj;
+            examSessionDirty = true;
             lastPassageIdRendered = null;
-            examPassageCollapsed = false;
-            enterExamWorkspace();
-            showToast("Sesi ujian sebelumnya berhasil dipulihkan.", "success");
-        }
+            lastRenderedQuestionKey = null;
+            persistActiveExamSession(true);
 
-        function discardSavedSessionFromWelcome() {
-            const saved = loadSavedExamSession();
-            if (!saved) {
-                checkAndRenderWelcomeResumeBanner();
-                return;
-            }
-            openGenericConfirmModal(
-                "Hapus Sesi Ujian Tertunda?",
-                `Sesi atas nama "${saved.studentName}" (${saved.className} - ${saved.subjectTitle}) akan dihapus dari perangkat ini. Lanjutkan hanya jika sesi tersebut bukan milik Anda atau sudah selesai.`,
-                () => {
-                    clearSavedExamSession();
-                    checkAndRenderWelcomeResumeBanner();
-                    showToast("Sesi tertunda berhasil dihapus dari perangkat ini.", "info");
-                },
-                "Ya, Hapus Sesi"
-            );
-        }
-
-        async function handleStudentLogin(e) {
-            if (e && e.preventDefault) e.preventDefault();
-            const name = (document.getElementById("student-name")?.value || "").trim();
-            const nisn = (document.getElementById("student-nisn")?.value || "").trim();
-            const cls = document.getElementById("student-class")?.value || verifiedStudentClass;
-            const subjId = document.getElementById("student-subject")?.value;
-
-            if (!name || !nisn || !cls || !subjId) {
-                showToast("Lengkapi seluruh data identitas dan mata pelajaran.", "warning");
-                return;
-            }
-
-            const subj = (appState.subjects || []).find(s => s.id === subjId);
-            if (!subj) return;
-
-            const schedCheck = checkSubjectScheduleEligibility(subj);
-            if (!schedCheck.allowed) {
-                showToast(schedCheck.reason, "error");
-                return;
-            }
-
-            const startBtn = document.getElementById("btn-start-exam");
-            if (startBtn) {
-                startBtn.disabled = true;
-                startBtn.textContent = "Memeriksa Riwayat Ujian...";
-            }
-
-            const cleanNisn = normalizeNisn(nisn);
-            const cleanClass = normalizeClassKey(cls);
-
-            // Cek ganda lokal & Cloud
-            const alreadyLocal = (appState.results || []).some(r =>
-                r.subjectId === subj.id &&
-                normalizeClassKey(r.className) === cleanClass &&
-                normalizeNisn(r.nisn) === cleanNisn
-            );
-            let alreadyCloud = false;
-            if (!alreadyLocal && window.cloudSync && window.cloudSync.enabled) {
-                alreadyCloud = await window.cloudSync.checkStudentAlreadyDone(subj.id, cls, nisn);
-            }
-
-            if (startBtn) {
-                startBtn.disabled = false;
-                startBtn.textContent = "Mulai Mengerjakan Ujian →";
-            }
-
-            if (alreadyLocal || alreadyCloud) {
-                showToast("Anda sudah menyelesaikan ujian pada mata pelajaran ini.", "error");
-                updateSubjectPreviewCard();
-                return;
-            }
-
-            // Cek apakah ada sesi tertunda di perangkat yang sama
-            const saved = loadSavedExamSession();
-            if (saved && !saved.submitted) {
-                const isSameStudent = saved.subjectId === subj.id &&
-                    normalizeClassKey(saved.className) === cleanClass &&
-                    normalizeNisn(saved.nisn) === cleanNisn;
-
-                if (isSameStudent) {
-                    const remSec = Math.max(0, Math.floor(((saved.endTimestamp || 0) - Date.now()) / 1000));
-                    if (remSec > 0) {
-                        activeExamSession = saved;
-                        lastPassageIdRendered = null;
-                        examPassageCollapsed = false;
-                        enterExamWorkspace();
-                        showToast("Melanjutkan sesi ujian Anda yang tersimpan.", "info");
-                        return;
-                    } else {
-                        // Sesi lama milik siswa yang sama sudah habis waktunya
-                        activeExamSession = saved;
-                        await finishExam(true);
-                        return;
-                    }
-                } else {
-                    // Sesi tertunda milik siswa sebelumnya di komputer lab bersama
-                    const prevRemSec = Math.max(0, Math.floor(((saved.endTimestamp || 0) - Date.now()) / 1000));
-                    if (prevRemSec <= 0) {
-                        activeExamSession = saved;
-                        await finishExam(true, { stayOnCurrentScreen: true });
-                    } else {
-                        openGenericConfirmModal(
-                            "Ada Sesi Siswa Lain di Perangkat Ini",
-                            `Perangkat ini masih menyimpan sesi aktif milik "${saved.studentName}" (${saved.className} - ${saved.subjectTitle}). Memulai ujian baru akan menimpa sesi tersebut. Lanjutkan?`,
-                            () => {
-                                clearSavedExamSession();
-                                startNewStudentExamSession(name, nisn, cls, subj);
-                            },
-                            "Timpa & Mulai Baru"
-                        );
-                        return;
-                    }
-                }
-            }
-
-            startNewStudentExamSession(name, nisn, cls, subj);
-        }
-
-        function startNewStudentExamSession(name, nisn, cls, subj) {
-            const activeQs = (subj.questions || []).filter(q => q.inExam !== false);
-            if (activeQs.length === 0) {
-                showToast("Tidak ada butir soal aktif pada mata pelajaran ini.", "error");
-                return;
-            }
-
-            const preparedQuestions = buildStudentExamQuestions(activeQs, Boolean(subj.shuffleQuestions));
-
-            // Pemetaan acak opsi pilihan (A-E) dan pasangan menjodohkan per soal bila fitur diaktifkan guru
-            const optionOrders = {};
-            const matchingRightOrders = {};
-            preparedQuestions.forEach(q => {
-                if ((q.type === "single" || q.type === "complex") && Array.isArray(q.options)) {
-                    const indices = q.options.map((_, idx) => idx);
-                    optionOrders[q.id] = subj.shuffleOptions ? shuffleArrayCopy(indices) : indices;
-                }
-                if (q.type === "matching" && Array.isArray(q.pairs)) {
-                    const rightTexts = q.pairs.map(p => p.right);
-                    matchingRightOrders[q.id] = shuffleArrayCopy(rightTexts);
-                }
-            });
-
-            const nowMs = Date.now();
-            let durationSec = Math.max(60, Number(subj.durationMinutes || 60) * 60);
-            let endTimestamp = nowMs + durationSec * 1000;
-
-            // Potong durasi ujian bila pembatasan jam selesai sesi aktif dan jam selesai lebih awal
-            if (appState.config?.enforceScheduleTime && subj.endTime) {
-                const targetDate = subj.scheduleDate || getActiveScheduleDate();
-                const sessionEndMs = parseTimeOnDateToMs(targetDate, subj.endTime);
-                if (sessionEndMs > nowMs && sessionEndMs < endTimestamp) {
-                    endTimestamp = sessionEndMs;
-                    durationSec = Math.max(30, Math.floor((endTimestamp - nowMs) / 1000));
-                }
-            }
-
-            activeExamSession = {
-                studentName: name,
-                nisn: nisn,
-                className: cls,
-                accessCodeUsed: verifiedStudentCode || "-",
-                subjectId: subj.id,
-                subjectTitle: subj.title,
-                kkm: Number(subj.kkm || 75),
-                showScore: subj.showScore !== false,
-                showReview: subj.showReview !== false,
-                passages: JSON.parse(JSON.stringify(subj.passages || [])),
-                questions: preparedQuestions,
-                optionOrders: optionOrders,
-                matchingRightOrders: matchingRightOrders,
-                answers: {},
-                doubts: {},
-                currentIndex: 0,
-                startTimestamp: nowMs,
-                endTimestamp: endTimestamp,
-                durationSeconds: durationSec,
-                proctorLogs: [],
-                submitted: false
-            };
-
-            lastPassageIdRendered = null;
-            examPassageCollapsed = false;
-            saveExamSessionToCache();
-            enterExamWorkspace();
-        }
-
-        function enterExamWorkspace() {
             switchScreenInternal("exam");
 
-            document.getElementById("exam-subject-title").textContent = activeExamSession.subjectTitle;
+            document.getElementById("exam-subject-title").textContent = sessionObj.subjectTitle || "Ujian";
             document.getElementById("exam-student-meta").textContent =
-                `Peserta: ${activeExamSession.studentName} (${activeExamSession.nisn}) • Kelas ${activeExamSession.className}`;
+                `Peserta: ${sessionObj.studentName} (${sessionObj.nisn}) • Kelas ${sessionObj.className}`;
 
-            updateExamIntegrityBadge();
-            startExamTimer();
-            renderCurrentQuestion();
-            renderQuestionGrid();
+            const integrityBadge = document.getElementById("exam-integrity-badge");
+            if (integrityBadge) {
+                const activeMon = appState.config?.enableIntegrityMonitor !== false;
+                integrityBadge.textContent = activeMon ? "Pengawas Aktif" : "Mode Standar";
+                integrityBadge.className = activeMon
+                    ? "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200";
+            }
 
             if (appState.config?.requireFullscreen) {
                 requestExamFullscreen();
             }
-        }
 
-        // ==================== PENGAWAS INTEGRITAS & LAYAR PENUH ====================
-        function requestExamFullscreen() {
-            const el = document.documentElement;
-            if (el.requestFullscreen) {
-                el.requestFullscreen().catch(() => {});
-            } else if (el.webkitRequestFullscreen) {
-                el.webkitRequestFullscreen();
-            }
-        }
+            renderCurrentExamQuestion(true);
+            updateExamProgressIndicators();
 
-        function exitExamFullscreenSafe() {
-            if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
-            }
-        }
+            if (examTimerInterval) clearInterval(examTimerInterval);
+            examAutoSaveTickCounter = 0;
 
-        function updateExamIntegrityBadge() {
-            const badge = document.getElementById("exam-integrity-badge");
-            if (!badge || !activeExamSession) return;
-            const cfg = appState.config || {};
-            if (!cfg.enableIntegrityMonitor && !cfg.requireFullscreen) {
-                badge.textContent = "Pengawas Standar";
-                badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200";
-                return;
-            }
-            const count = (activeExamSession.proctorLogs || []).length;
-            const maxV = Number(cfg.maxIntegrityViolations || 0);
-            if (count === 0) {
-                badge.textContent = maxV > 0 ? `Pengawas Aktif (Maks ${maxV}x)` : "Pengawas Aktif (0 Pelanggaran)";
-                badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200";
-            } else {
-                badge.textContent = maxV > 0 ? `Pelanggaran: ${count} / ${maxV}` : `Pelanggaran Tercatat: ${count}x`;
-                badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200";
-            }
-        }
+            const updateTimerTick = () => {
+                if (!activeExamSession) return;
+                const remainMs = activeExamSession.endTimeMs - Date.now();
+                const timerEl = document.getElementById("exam-timer");
+                const timerBox = document.getElementById("timer-box");
 
-        let lastViolationTimestamp = 0;
-        let pendingBlurTimeout = null;
-        function recordProctorViolation(reasonText) {
-            if (currentScreen !== "exam" || !activeExamSession || activeExamSession.submitted) return;
-            const cfg = appState.config || {};
-            if (!cfg.enableIntegrityMonitor && !cfg.requireFullscreen) return;
-
-            const now = Date.now();
-            // Cooldown 3 detik agar satu kejadian keluar layar tidak tercatat ganda (visibilitychange + blur)
-            if (now - lastViolationTimestamp < 3000) return;
-            lastViolationTimestamp = now;
-
-            const currentQ = activeExamSession.questions[activeExamSession.currentIndex];
-            const logItem = {
-                time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-                timestamp: now,
-                questionNo: activeExamSession.currentIndex + 1,
-                questionId: currentQ?.id || "-",
-                reason: reasonText
-            };
-            activeExamSession.proctorLogs = activeExamSession.proctorLogs || [];
-            activeExamSession.proctorLogs.push(logItem);
-            saveExamSessionToCache();
-            updateExamIntegrityBadge();
-
-            const count = activeExamSession.proctorLogs.length;
-            const maxV = Number(cfg.maxIntegrityViolations || 0);
-            if (maxV > 0 && count >= maxV) {
-                showToast(`Batas pelanggaran (${maxV}x) tercapai. Ujian otomatis dikumpulkan!`, "error");
-                setTimeout(() => {
-                    if (currentScreen === "exam" && activeExamSession && !activeExamSession.submitted) {
-                        finishExam(true);
-                    }
-                }, 900);
-            } else {
-                const remainInfo = maxV > 0 ? ` (Sisa toleransi: ${maxV - count}x sebelum dikumpulkan otomatis)` : "";
-                showToast(`Peringatan Pengawas: ${reasonText}${remainInfo}`, "warning");
-            }
-        }
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden && currentScreen === "exam" && activeExamSession && !activeExamSession.submitted) {
-                if (pendingBlurTimeout) {
-                    clearTimeout(pendingBlurTimeout);
-                    pendingBlurTimeout = null;
-                }
-                if (appState.config?.enableIntegrityMonitor) {
-                    recordProctorViolation("Meninggalkan tab / meminimalkan jendela ujian");
-                }
-            }
-        });
-
-        window.addEventListener("blur", () => {
-            if (currentScreen === "exam" && activeExamSession && !activeExamSession.submitted) {
-                if (appState.config?.enableIntegrityMonitor) {
-                    if (pendingBlurTimeout) clearTimeout(pendingBlurTimeout);
-                    // Beri jeda 1,8 detik agar notifikasi sistem/pop-up sesaat tidak dianggap pelanggaran palsu
-                    pendingBlurTimeout = setTimeout(() => {
-                        pendingBlurTimeout = null;
-                        if (!document.hasFocus() && currentScreen === "exam" && activeExamSession && !activeExamSession.submitted) {
-                            recordProctorViolation("Berpindah fokus keluar dari aplikasi ujian");
-                        }
-                    }, 1800);
-                }
-            }
-        });
-
-        window.addEventListener("focus", () => {
-            if (pendingBlurTimeout) {
-                clearTimeout(pendingBlurTimeout);
-                pendingBlurTimeout = null;
-            }
-        });
-
-        document.addEventListener("fullscreenchange", () => {
-            const warnBar = document.getElementById("exam-fullscreen-warning-bar");
-            if (currentScreen !== "exam" || !activeExamSession || activeExamSession.submitted) {
-                if (warnBar) warnBar.classList.add("hidden");
-                return;
-            }
-            if (appState.config?.requireFullscreen && !document.fullscreenElement) {
-                if (warnBar) warnBar.classList.remove("hidden");
-                recordProctorViolation("Keluar dari mode layar penuh (Fullscreen)");
-            } else if (warnBar) {
-                warnBar.classList.add("hidden");
-            }
-        });
-
-        document.addEventListener("contextmenu", (e) => {
-            if (currentScreen === "exam") {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener("copy", (e) => {
-            if (currentScreen === "exam") {
-                e.preventDefault();
-            }
-        });
-
-        // ==================== TIMER & AUTO-SAVE UJIAN ====================
-        function startExamTimer() {
-            stopExamTimer();
-            updateTimerDisplay();
-
-            examTimerInterval = setInterval(() => {
-                if (!activeExamSession || activeExamSession.submitted) {
-                    stopExamTimer();
+                if (remainMs <= 0) {
+                    if (timerEl) timerEl.textContent = "00:00";
+                    finishExam("Waktu ujian habis");
                     return;
                 }
-                const rem = updateTimerDisplay();
-                if (rem <= 0) {
-                    stopExamTimer();
-                    showToast("Waktu ujian telah habis! Jawaban dikumpulkan otomatis.", "warning");
-                    finishExam(true);
+
+                const totalSecs = Math.ceil(remainMs / 1000);
+                const mins = Math.floor(totalSecs / 60);
+                const secs = totalSecs % 60;
+                if (timerEl) {
+                    timerEl.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
                 }
-            }, 1000);
-
-            examAutoSaveInterval = setInterval(() => {
-                if (activeExamSession && !activeExamSession.submitted) {
-                    saveExamSessionToCache();
+                if (timerBox) {
+                    if (totalSecs <= 300) {
+                        timerBox.className = "px-4 py-2 rounded-xl bg-rose-700 text-white flex items-center gap-2.5 animate-pulse";
+                    } else {
+                        timerBox.className = "px-4 py-2 rounded-xl bg-slate-900 text-white flex items-center gap-2.5";
+                    }
                 }
-            }, 8000);
-        }
 
-        function stopExamTimer() {
-            if (examTimerInterval) {
-                clearInterval(examTimerInterval);
-                examTimerInterval = null;
-            }
-            if (examAutoSaveInterval) {
-                clearInterval(examAutoSaveInterval);
-                examAutoSaveInterval = null;
-            }
-        }
-
-        function updateTimerDisplay() {
-            if (!activeExamSession) return 0;
-            const remSec = Math.max(0, Math.floor((activeExamSession.endTimestamp - Date.now()) / 1000));
-            const hrs = Math.floor(remSec / 3600);
-            const mins = Math.floor((remSec % 3600) / 60);
-            const secs = remSec % 60;
-            const formatted = hrs > 0
-                ? `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-                : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-
-            const timerEl = document.getElementById("exam-timer");
-            const boxEl = document.getElementById("timer-box");
-            if (timerEl) timerEl.textContent = formatted;
-            if (boxEl) {
-                if (remSec <= 300) {
-                    boxEl.classList.remove("bg-slate-900");
-                    boxEl.classList.add("bg-rose-700", "animate-pulse");
-                } else {
-                    boxEl.classList.add("bg-slate-900");
-                    boxEl.classList.remove("bg-rose-700", "animate-pulse");
+                examAutoSaveTickCounter++;
+                if (examAutoSaveTickCounter >= 8) {
+                    examAutoSaveTickCounter = 0;
+                    persistActiveExamSession(false);
                 }
-            }
-            return remSec;
+            };
+
+            updateTimerTick();
+            examTimerInterval = setInterval(updateTimerTick, 1000);
         }
 
-        // ==================== RENDER SOAL & INPUT JAWABAN SISWA ====================
-        function changeExamFontSize(deltaStep) {
-            examFontScale = Math.min(130, Math.max(85, examFontScale + deltaStep * 10));
-            const label = document.getElementById("exam-font-size-label");
-            if (label) label.textContent = `${examFontScale}%`;
-            applyExamFontScaleToDom();
-        }
-
-        function applyExamFontScaleToDom() {
-            const qTextEl = document.getElementById("question-text");
-            const passageContentEl = document.getElementById("question-passage-content");
-            const answerAreaEl = document.getElementById("answer-input-area");
-            const scaleRatio = examFontScale / 100;
-
-            if (qTextEl) qTextEl.style.fontSize = `${(16.5 * scaleRatio).toFixed(1)}px`;
-            if (passageContentEl) passageContentEl.style.fontSize = `${(14.5 * scaleRatio).toFixed(1)}px`;
-            if (answerAreaEl) answerAreaEl.style.fontSize = `${(14.5 * scaleRatio).toFixed(1)}px`;
-        }
-
-        function isQuestionAnswered(q, ans) {
-            if (ans === undefined || ans === null) return false;
-            if (q.type === "single") return typeof ans === "number" && ans >= 0;
-            if (q.type === "complex") return Array.isArray(ans) && ans.length > 0;
-            if (q.type === "truefalse") return typeof ans === "boolean";
-            if (q.type === "short" || q.type === "essay") return String(ans).trim().length > 0;
-            if (q.type === "matching") {
-                if (typeof ans !== "object" || Array.isArray(ans)) return false;
-                const pairsLen = (q.pairs || []).length;
-                if (pairsLen === 0) return false;
-                let filled = 0;
-                for (let i = 0; i < pairsLen; i++) {
-                    if (ans[i] && String(ans[i]).trim() !== "") filled++;
-                }
-                return filled > 0;
-            }
-            return false;
-        }
-
-        function toggleExamPassageCollapse() {
-            examPassageCollapsed = !examPassageCollapsed;
-            const body = document.getElementById("question-passage-body");
-            const btn = document.getElementById("btn-toggle-exam-passage");
-            if (body) body.classList.toggle("hidden", examPassageCollapsed);
-            if (btn) btn.textContent = examPassageCollapsed ? "Tampilkan Bacaan" : "Sembunyikan";
-        }
-
-        function renderCurrentQuestion() {
+        function renderCurrentExamQuestion(forceFullRender = false) {
             if (!activeExamSession) return;
-            const qs = activeExamSession.questions;
-            const idx = activeExamSession.currentIndex;
+            const qs = activeExamSession.questions || [];
+            const idx = Math.min(qs.length - 1, Math.max(0, activeExamSession.currentIndex || 0));
+            activeExamSession.currentIndex = idx;
             const q = qs[idx];
             if (!q) return;
 
+            const ans = activeExamSession.answers?.[q.id];
+            const isDoubt = Boolean(activeExamSession.doubts?.[q.id]);
+            const answered = isQuestionAnswered(q, ans);
+
             document.getElementById("question-number-badge").textContent = `Soal No. ${idx + 1}`;
             document.getElementById("question-type-badge").textContent = getQuestionTypeLabel(q.type);
-
-            const ans = activeExamSession.answers[q.id];
-            const isDoubt = Boolean(activeExamSession.doubts[q.id]);
-            const answered = isQuestionAnswered(q, ans);
 
             const statusPill = document.getElementById("question-status-pill");
             if (isDoubt) {
@@ -4077,55 +3832,65 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 statusPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600";
             }
 
-            const clearBtn = document.getElementById("btn-clear-answer");
-            if (clearBtn) clearBtn.classList.toggle("hidden", !answered);
+            document.getElementById("flag-doubt-checkbox").checked = isDoubt;
+            document.getElementById("btn-clear-answer").classList.toggle("hidden", !answered);
+            document.getElementById("btn-prev-q").disabled = idx === 0;
 
-            // Tampilkan Teks Bacaan / Wacana jika soal tertaut dengan bacaan
+            const nextBtn = document.getElementById("btn-next-q");
+            if (idx === qs.length - 1) {
+                nextBtn.textContent = "Selesai & Kumpulkan ✓";
+                nextBtn.className = "px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition";
+            } else {
+                nextBtn.textContent = "Selanjutnya →";
+                nextBtn.className = "px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition";
+            }
+
+            const renderKey = `${idx}_${q.id}`;
+            if (!forceFullRender && lastRenderedQuestionKey === renderKey) {
+                updateQuestionSelectionVisuals();
+                return;
+            }
+            lastRenderedQuestionKey = renderKey;
+
+            // Teks Bacaan / Wacana
             const passageBox = document.getElementById("question-passage-box");
             const passageObj = q.passageId
                 ? (activeExamSession.passages || []).find(p => p.id === q.passageId)
                 : null;
 
             if (passageObj) {
-                if (lastPassageIdRendered !== passageObj.id) {
-                    examPassageCollapsed = false;
-                    lastPassageIdRendered = passageObj.id;
-                }
                 passageBox.classList.remove("hidden");
-                document.getElementById("question-passage-title").textContent = passageObj.title || "Teks Bacaan";
-                document.getElementById("question-passage-content").textContent = passageObj.content || "";
+                if (lastPassageIdRendered !== passageObj.id) {
+                    lastPassageIdRendered = passageObj.id;
+                    examPassageCollapsed = false;
+                    document.getElementById("question-passage-title").textContent = passageObj.title || "Teks Bacaan";
+                    const pContent = document.getElementById("question-passage-content");
+                    pContent.textContent = passageObj.content || "";
+                    pContent.style.fontSize = `${examFontScale}%`;
 
-                const linkedNumbers = [];
-                qs.forEach((item, i) => {
-                    if (item.passageId === passageObj.id) linkedNumbers.push(i + 1);
-                });
-                const rangeBadge = document.getElementById("question-passage-range-badge");
-                if (linkedNumbers.length > 1) {
-                    rangeBadge.textContent = `Untuk Soal No. ${linkedNumbers.join(", ")}`;
-                    rangeBadge.classList.remove("hidden");
-                } else {
-                    rangeBadge.classList.add("hidden");
+                    const pImgWrap = document.getElementById("question-passage-image-wrapper");
+                    const pImg = document.getElementById("question-passage-image");
+                    if (passageObj.imageUrl) {
+                        pImg.src = passageObj.imageUrl;
+                        pImgWrap.classList.remove("hidden");
+                    } else {
+                        pImg.src = "";
+                        pImgWrap.classList.add("hidden");
+                    }
+                    renderMathInElementSafe(passageBox);
                 }
-
-                const pImgWrap = document.getElementById("question-passage-image-wrapper");
-                const pImg = document.getElementById("question-passage-image");
-                if (passageObj.imageUrl) {
-                    pImg.src = passageObj.imageUrl;
-                    pImgWrap.classList.remove("hidden");
-                } else {
-                    pImg.src = "";
-                    pImgWrap.classList.add("hidden");
-                }
-
                 document.getElementById("question-passage-body").classList.toggle("hidden", examPassageCollapsed);
-                document.getElementById("btn-toggle-exam-passage").textContent = examPassageCollapsed ? "Tampilkan Bacaan" : "Sembunyikan";
+                document.getElementById("btn-toggle-exam-passage").textContent = examPassageCollapsed ? "Tampilkan" : "Sembunyikan";
             } else {
-                lastPassageIdRendered = null;
                 passageBox.classList.add("hidden");
+                lastPassageIdRendered = null;
             }
 
-            // Teks & Gambar Soal
-            document.getElementById("question-text").textContent = q.text || "";
+            // Teks Pertanyaan & Gambar Soal
+            const qTextEl = document.getElementById("question-text");
+            qTextEl.textContent = q.text || "";
+            qTextEl.style.fontSize = `${examFontScale}%`;
+
             const imgWrap = document.getElementById("question-image-wrapper");
             const imgEl = document.getElementById("question-image");
             if (q.imageUrl) {
@@ -4136,284 +3901,189 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 imgWrap.classList.add("hidden");
             }
 
-            // Area Input Jawaban
-            const inputArea = document.getElementById("answer-input-area");
+            // Render Area Input Jawaban sesuai Tipe Soal
+            const area = document.getElementById("answer-input-area");
             const letters = ["A", "B", "C", "D", "E", "F"];
-
             if (q.type === "single") {
-                const order = activeExamSession.optionOrders?.[q.id] || (q.options || []).map((_, i) => i);
-                inputArea.innerHTML = order.map((origIdx, displayIdx) => {
-                    const optText = q.options[origIdx] ?? "";
-                    const isChecked = ans === origIdx;
+                area.innerHTML = (q.options || []).map((opt, optIdx) => {
+                    const selected = Number(ans) === optIdx;
                     return `
-                        <label onclick="selectSingleOption(${origIdx})"
-                            class="flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition select-none ${isChecked ? "border-indigo-600 bg-indigo-50/70 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}">
-                            <span class="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 transition ${isChecked ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">
-                                ${letters[displayIdx] || displayIdx + 1}
-                            </span>
-                            <span class="pt-1 text-slate-800 font-medium leading-relaxed whitespace-pre-line">${escapeHtml(optText)}</span>
-                        </label>
+                        <button type="button" data-opt-idx="${optIdx}" onclick="selectSingleOption(${optIdx})"
+                            class="exam-opt-btn w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3 ${selected ? "border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-100" : "border-slate-200 bg-white hover:bg-slate-50"}">
+                            <span class="exam-opt-badge w-7 h-7 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 ${selected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">${letters[optIdx] || optIdx + 1}</span>
+                            <span class="text-sm sm:text-[15px] text-slate-800 leading-snug pt-0.5" style="font-size:${examFontScale}%">${escapeHtml(opt)}</span>
+                        </button>
                     `;
                 }).join("");
             } else if (q.type === "complex") {
-                const selectedArr = Array.isArray(ans) ? ans : [];
-                const order = activeExamSession.optionOrders?.[q.id] || (q.options || []).map((_, i) => i);
-                inputArea.innerHTML = `
-                    <p class="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl">
-                        Pilih satu atau lebih jawaban yang menurut Anda benar:
-                    </p>
-                    ${order.map((origIdx, displayIdx) => {
-                        const optText = q.options[origIdx] ?? "";
-                        const isChecked = selectedArr.includes(origIdx);
+                const selectedSet = new Set(Array.isArray(ans) ? ans.map(Number) : []);
+                area.innerHTML = `
+                    <p class="text-xs font-semibold text-indigo-700">Pilih lebih dari satu jawaban yang benar:</p>
+                    ${(q.options || []).map((opt, optIdx) => {
+                        const checked = selectedSet.has(optIdx);
                         return `
-                            <label onclick="toggleComplexOption(${origIdx})"
-                                class="flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition select-none ${isChecked ? "border-indigo-600 bg-indigo-50/70 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}">
-                                <span class="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 transition ${isChecked ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">
-                                    ${isChecked ? "✓" : (letters[displayIdx] || displayIdx + 1)}
-                                </span>
-                                <span class="pt-1 text-slate-800 font-medium leading-relaxed whitespace-pre-line">${escapeHtml(optText)}</span>
-                            </label>
+                            <button type="button" data-opt-idx="${optIdx}" onclick="toggleComplexOption(${optIdx})"
+                                class="exam-opt-btn w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3 ${checked ? "border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-100" : "border-slate-200 bg-white hover:bg-slate-50"}">
+                                <span class="exam-opt-badge w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${checked ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">${checked ? "✓" : (letters[optIdx] || optIdx + 1)}</span>
+                                <span class="text-sm sm:text-[15px] text-slate-800 leading-snug pt-0.5" style="font-size:${examFontScale}%">${escapeHtml(opt)}</span>
+                            </button>
                         `;
                     }).join("")}
                 `;
             } else if (q.type === "truefalse") {
-                inputArea.innerHTML = `
+                area.innerHTML = `
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button type="button" onclick="selectTrueFalseOption(true)"
-                            class="p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 ${ans === true ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}">
-                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${ans === true ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500"}">B</span>
-                            <span>BENAR</span>
+                        <button type="button" data-tf-val="true" onclick="selectTrueFalseOption(true)"
+                            class="exam-tf-btn p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 ${ans === true ? "border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-100" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}">
+                            <span>✓ BENAR</span>
                         </button>
-                        <button type="button" onclick="selectTrueFalseOption(false)"
-                            class="p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 ${ans === false ? "border-rose-600 bg-rose-50 text-rose-900 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}">
-                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${ans === false ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-500"}">S</span>
-                            <span>SALAH</span>
+                        <button type="button" data-tf-val="false" onclick="selectTrueFalseOption(false)"
+                            class="exam-tf-btn p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 ${ans === false ? "border-rose-600 bg-rose-50 text-rose-900 ring-2 ring-rose-100" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}">
+                            <span>✕ SALAH</span>
                         </button>
                     </div>
                 `;
             } else if (q.type === "short") {
-                inputArea.innerHTML = `
+                area.innerHTML = `
                     <div class="space-y-2">
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Ketik Jawaban Singkat Anda:</label>
-                        <input type="text" value="${escapeHtml(ans || "")}" oninput="updateTextStudentAnswer(this.value)"
-                            placeholder="Tuliskan jawaban singkat yang tepat di sini..."
-                            class="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-300 focus:border-indigo-600 bg-white font-semibold text-slate-900 outline-none transition">
+                        <input type="text" value="${escapeHtml(ans || "")}" oninput="onShortAnswerInput(this.value)"
+                            placeholder="Tuliskan jawaban singkat di sini..."
+                            class="w-full px-4 py-3.5 rounded-2xl border border-slate-300 bg-white text-sm sm:text-base font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                     </div>
                 `;
             } else if (q.type === "matching") {
                 const pairs = q.pairs || [];
-                const rightPool = activeExamSession.matchingRightOrders?.[q.id] || pairs.map(p => p.right);
+                const rightOptions = pairs.map(p => p.right);
                 const currentMap = (ans && typeof ans === "object" && !Array.isArray(ans)) ? ans : {};
-                inputArea.innerHTML = `
-                    <div class="space-y-3">
-                        <p class="text-xs font-semibold text-slate-600">Pilih pasangan yang sesuai pada kolom sebelah kanan untuk setiap pernyataan:</p>
+                area.innerHTML = `
+                    <div class="space-y-2.5">
+                        <p class="text-xs font-semibold text-slate-500">Pasangkan setiap pernyataan di sebelah kiri dengan pilihan yang sesuai di sebelah kanan:</p>
                         ${pairs.map((p, pIdx) => `
                             <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                                <div class="font-semibold text-slate-800 text-sm">
-                                    <span class="inline-block w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 text-center text-xs leading-6 font-bold mr-1.5">${pIdx + 1}</span>
-                                    ${escapeHtml(p.left)}
-                                </div>
-                                <select onchange="updateMatchingAnswer(${pIdx}, this.value)"
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600">
+                                <div class="text-xs sm:text-sm font-semibold text-slate-800">${escapeHtml(p.left)}</div>
+                                <select onchange="onMatchingSelectChange(${pIdx}, this.value)"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold outline-none focus:border-indigo-500">
                                     <option value="">-- Pilih Pasangan --</option>
-                                    ${rightPool.map(rText => `
-                                        <option value="${escapeHtml(rText)}" ${currentMap[pIdx] === rText ? "selected" : ""}>${escapeHtml(rText)}</option>
-                                    `).join("")}
+                                    ${rightOptions.map(rOpt => `<option value="${escapeHtml(rOpt)}" ${currentMap[pIdx] === rOpt ? "selected" : ""}>${escapeHtml(rOpt)}</option>`).join("")}
                                 </select>
                             </div>
                         `).join("")}
                     </div>
                 `;
             } else if (q.type === "essay") {
-                inputArea.innerHTML = `
+                area.innerHTML = `
                     <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Tuliskan Jawaban Uraian / Essay Anda:</label>
-                        <textarea rows="6" oninput="updateTextStudentAnswer(this.value)"
-                            placeholder="Ketik penjelasan jawaban lengkap Anda di sini..."
-                            class="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-300 focus:border-indigo-600 bg-white text-slate-900 leading-relaxed outline-none transition">${escapeHtml(ans || "")}</textarea>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Tuliskan Jawaban Uraian Anda:</label>
+                        <textarea rows="6" oninput="onEssayAnswerInput(this.value)"
+                            placeholder="Ketik jawaban uraian lengkap dan jelas di sini..."
+                            class="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-white text-sm sm:text-base leading-relaxed outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">${escapeHtml(ans || "")}</textarea>
                     </div>
                 `;
             }
 
-            // Checkbox Ragu-ragu & Tombol Navigasi Bawah
-            document.getElementById("flag-doubt-checkbox").checked = isDoubt;
-            document.getElementById("btn-prev-q").disabled = idx === 0;
-
-            const nextBtn = document.getElementById("btn-next-q");
-            if (idx === qs.length - 1) {
-                nextBtn.textContent = "Selesai & Kumpulkan ✓";
-                nextBtn.className = "px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition";
-                nextBtn.onclick = () => openSubmitConfirmModal();
-            } else {
-                nextBtn.innerHTML = "Selanjutnya &rarr;";
-                nextBtn.className = "px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition";
-                nextBtn.onclick = () => navigateQuestion(1);
-            }
-
-            applyExamFontScaleToDom();
             renderMathInElementSafe(document.getElementById("screen-exam"));
         }
 
-        function selectSingleOption(origIdx) {
+        function updateQuestionSelectionVisuals() {
             if (!activeExamSession) return;
             const q = activeExamSession.questions[activeExamSession.currentIndex];
-            activeExamSession.answers[q.id] = origIdx;
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
+            if (!q) return;
+            const ans = activeExamSession.answers?.[q.id];
+            const letters = ["A", "B", "C", "D", "E", "F"];
 
-        function toggleComplexOption(origIdx) {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            const prev = Array.isArray(activeExamSession.answers[q.id]) ? [...activeExamSession.answers[q.id]] : [];
-            const pos = prev.indexOf(origIdx);
-            if (pos >= 0) prev.splice(pos, 1);
-            else prev.push(origIdx);
-            activeExamSession.answers[q.id] = prev.sort((a, b) => a - b);
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
-
-        function selectTrueFalseOption(boolVal) {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            activeExamSession.answers[q.id] = boolVal;
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
-
-        function updateTextStudentAnswer(val) {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            activeExamSession.answers[q.id] = val;
-
-            const answered = isQuestionAnswered(q, val);
-            const isDoubt = Boolean(activeExamSession.doubts[q.id]);
-            const statusPill = document.getElementById("question-status-pill");
-            const clearBtn = document.getElementById("btn-clear-answer");
-            if (clearBtn) clearBtn.classList.toggle("hidden", !answered);
-            if (statusPill && !isDoubt) {
-                if (answered) {
-                    statusPill.textContent = "Sudah Dijawab";
-                    statusPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
-                } else {
-                    statusPill.textContent = "Belum Dijawab";
-                    statusPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600";
-                }
-            }
-
-            if (examTextDebounceTimer) clearTimeout(examTextDebounceTimer);
-            examTextDebounceTimer = setTimeout(() => {
-                saveExamSessionToCache();
-                renderQuestionGrid();
-            }, 350);
-        }
-
-        function updateMatchingAnswer(pairIdx, selectedRightText) {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            const currentMap = (activeExamSession.answers[q.id] && typeof activeExamSession.answers[q.id] === "object")
-                ? { ...activeExamSession.answers[q.id] }
-                : {};
-            currentMap[pairIdx] = selectedRightText;
-            activeExamSession.answers[q.id] = currentMap;
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
-
-        function clearCurrentStudentAnswer() {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            delete activeExamSession.answers[q.id];
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
-
-        function toggleDoubtFlag(checked) {
-            if (!activeExamSession) return;
-            const q = activeExamSession.questions[activeExamSession.currentIndex];
-            activeExamSession.doubts[q.id] = Boolean(checked);
-            saveExamSessionToCache();
-            renderCurrentQuestion();
-            renderQuestionGrid();
-        }
-
-        function navigateQuestion(delta) {
-            if (!activeExamSession) return;
-            const nextIdx = activeExamSession.currentIndex + delta;
-            if (nextIdx >= 0 && nextIdx < activeExamSession.questions.length) {
-                activeExamSession.currentIndex = nextIdx;
-                saveExamSessionToCache();
-                renderCurrentQuestion();
-                renderQuestionGrid();
+            if (q.type === "single") {
+                document.querySelectorAll("#answer-input-area .exam-opt-btn").forEach(btn => {
+                    const idx = Number(btn.getAttribute("data-opt-idx"));
+                    const sel = Number(ans) === idx;
+                    btn.className = `exam-opt-btn w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3 ${sel ? "border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-100" : "border-slate-200 bg-white hover:bg-slate-50"}`;
+                    const badge = btn.querySelector(".exam-opt-badge");
+                    if (badge) {
+                        badge.className = `exam-opt-badge w-7 h-7 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 ${sel ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}`;
+                    }
+                });
+            } else if (q.type === "complex") {
+                const selectedSet = new Set(Array.isArray(ans) ? ans.map(Number) : []);
+                document.querySelectorAll("#answer-input-area .exam-opt-btn").forEach(btn => {
+                    const idx = Number(btn.getAttribute("data-opt-idx"));
+                    const sel = selectedSet.has(idx);
+                    btn.className = `exam-opt-btn w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3 ${sel ? "border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-100" : "border-slate-200 bg-white hover:bg-slate-50"}`;
+                    const badge = btn.querySelector(".exam-opt-badge");
+                    if (badge) {
+                        badge.className = `exam-opt-badge w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${sel ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}`;
+                        badge.textContent = sel ? "✓" : (letters[idx] || idx + 1);
+                    }
+                });
+            } else if (q.type === "truefalse") {
+                document.querySelectorAll("#answer-input-area .exam-tf-btn").forEach(btn => {
+                    const val = btn.getAttribute("data-tf-val") === "true";
+                    const sel = ans === val;
+                    if (val) {
+                        btn.className = `exam-tf-btn p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 ${sel ? "border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-100" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}`;
+                    } else {
+                        btn.className = `exam-tf-btn p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 ${sel ? "border-rose-600 bg-rose-50 text-rose-900 ring-2 ring-rose-100" : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"}`;
+                    }
+                });
             }
         }
 
-        function jumpToQuestion(idx) {
+        function updateExamProgressIndicators() {
             if (!activeExamSession) return;
-            if (idx >= 0 && idx < activeExamSession.questions.length) {
-                activeExamSession.currentIndex = idx;
-                saveExamSessionToCache();
-                renderCurrentQuestion();
-                renderQuestionGrid();
-                toggleMobileNavModal(false);
-            }
-        }
-
-        function renderQuestionGrid() {
-            if (!activeExamSession) return;
-            const qs = activeExamSession.questions;
-            const curIdx = activeExamSession.currentIndex;
+            const qs = activeExamSession.questions || [];
             let answeredCount = 0;
             let doubtCount = 0;
+            qs.forEach(q => {
+                if (activeExamSession.doubts?.[q.id]) doubtCount++;
+                if (isQuestionAnswered(q, activeExamSession.answers?.[q.id])) answeredCount++;
+            });
+            const emptyCount = Math.max(0, qs.length - answeredCount);
 
-            const buttonsHtml = qs.map((q, i) => {
-                const ans = activeExamSession.answers[q.id];
-                const isDoubt = Boolean(activeExamSession.doubts[q.id]);
-                const answered = isQuestionAnswered(q, ans);
-                if (answered) answeredCount++;
-                if (isDoubt) doubtCount++;
+            const navBadge = document.getElementById("nav-btn-progress-badge");
+            if (navBadge) navBadge.textContent = `${answeredCount}/${qs.length}`;
 
-                let cls = "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200";
-                if (isDoubt) cls = "bg-amber-400 text-amber-950 border-amber-500 font-extrabold";
-                else if (answered) cls = "bg-emerald-500 text-white border-emerald-600 font-bold";
+            const deskText = document.getElementById("desktop-progress-text");
+            if (deskText) deskText.textContent = `${answeredCount} / ${qs.length} Terjawab`;
 
-                const ring = i === curIdx ? "ring-2 ring-indigo-600 ring-offset-1" : "";
+            const elAns = document.getElementById("legend-answered-count");
+            const elDoubt = document.getElementById("legend-doubt-count");
+            const elEmpty = document.getElementById("legend-empty-count");
+            if (elAns) elAns.textContent = answeredCount;
+            if (elDoubt) elDoubt.textContent = doubtCount;
+            if (elEmpty) elEmpty.textContent = emptyCount;
+        }
+
+        function renderExamNavigationGrid() {
+            if (!activeExamSession) return;
+            const grid = document.getElementById("mobile-question-grid");
+            if (!grid) return;
+
+            const qs = activeExamSession.questions || [];
+            const curIdx = activeExamSession.currentIndex || 0;
+            grid.innerHTML = qs.map((q, idx) => {
+                const isDoubt = Boolean(activeExamSession.doubts?.[q.id]);
+                const answered = isQuestionAnswered(q, activeExamSession.answers?.[q.id]);
+                const isCurrent = idx === curIdx;
+
+                let cls = "bg-slate-100 text-slate-700 border-slate-300";
+                if (isDoubt) cls = "bg-amber-400 text-amber-950 border-amber-500";
+                else if (answered) cls = "bg-emerald-500 text-white border-emerald-600";
+
+                const ring = isCurrent ? "ring-2 ring-indigo-600 ring-offset-1" : "";
                 return `
-                    <button type="button" onclick="jumpToQuestion(${i})"
-                        class="h-10 rounded-xl border text-xs font-bold transition ${cls} ${ring}">
-                        ${i + 1}
+                    <button type="button" onclick="jumpToQuestion(${idx})"
+                        class="h-10 rounded-xl border font-extrabold text-xs transition ${cls} ${ring}">
+                        ${idx + 1}
                     </button>
                 `;
             }).join("");
-
-            const emptyCount = Math.max(0, qs.length - answeredCount);
-            const grid = document.getElementById("mobile-question-grid");
-            if (grid) grid.innerHTML = buttonsHtml;
-
-            const navBadge = document.getElementById("nav-btn-progress-badge");
-            const progText = document.getElementById("desktop-progress-text");
-            if (navBadge) navBadge.textContent = `${answeredCount}/${qs.length}`;
-            if (progText) progText.textContent = `${answeredCount} / ${qs.length} Terjawab`;
-
-            const lAns = document.getElementById("legend-answered-count");
-            const lDoubt = document.getElementById("legend-doubt-count");
-            const lEmpty = document.getElementById("legend-empty-count");
-            if (lAns) lAns.textContent = answeredCount;
-            if (lDoubt) lDoubt.textContent = doubtCount;
-            if (lEmpty) lEmpty.textContent = emptyCount;
         }
 
         function toggleMobileNavModal(show) {
             const modal = document.getElementById("modal-mobile-nav");
             if (!modal) return;
             if (show) {
-                renderQuestionGrid();
+                renderExamNavigationGrid();
+                updateExamProgressIndicators();
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
             } else {
@@ -4422,22 +4092,296 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             }
         }
 
-        // ==================== KONFIRMASI & PENILAIAN UJIAN ====================
+        function navigateQuestion(delta) {
+            if (!activeExamSession) return;
+            const qs = activeExamSession.questions || [];
+            const nextIdx = activeExamSession.currentIndex + delta;
+            if (nextIdx >= qs.length) {
+                openSubmitConfirmModal();
+                return;
+            }
+            if (nextIdx >= 0 && nextIdx < qs.length) {
+                activeExamSession.currentIndex = nextIdx;
+                renderCurrentExamQuestion(true);
+            }
+        }
+
+        function jumpToQuestion(index) {
+            if (!activeExamSession) return;
+            const qs = activeExamSession.questions || [];
+            if (index >= 0 && index < qs.length) {
+                activeExamSession.currentIndex = index;
+                toggleMobileNavModal(false);
+                renderCurrentExamQuestion(true);
+            }
+        }
+
+        function markAnswerChanged() {
+            examSessionDirty = true;
+            renderCurrentExamQuestion(false);
+            updateExamProgressIndicators();
+            persistActiveExamSession(true);
+        }
+
+        function selectSingleOption(optIndex) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            activeExamSession.answers[q.id] = Number(optIndex);
+            markAnswerChanged();
+        }
+
+        function toggleComplexOption(optIndex) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            const prev = Array.isArray(activeExamSession.answers[q.id]) ? [...activeExamSession.answers[q.id]] : [];
+            const pos = prev.indexOf(Number(optIndex));
+            if (pos >= 0) prev.splice(pos, 1);
+            else prev.push(Number(optIndex));
+            prev.sort((a, b) => a - b);
+            activeExamSession.answers[q.id] = prev;
+            markAnswerChanged();
+        }
+
+        function selectTrueFalseOption(boolVal) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            activeExamSession.answers[q.id] = Boolean(boolVal);
+            markAnswerChanged();
+        }
+
+        function onShortAnswerInput(val) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            activeExamSession.answers[q.id] = val;
+            examSessionDirty = true;
+            renderCurrentExamQuestion(false);
+            updateExamProgressIndicators();
+            if (examTextDebounceTimer) clearTimeout(examTextDebounceTimer);
+            examTextDebounceTimer = setTimeout(() => persistActiveExamSession(true), 500);
+        }
+
+        function onMatchingSelectChange(pairIndex, rightVal) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            const prev = (activeExamSession.answers[q.id] && typeof activeExamSession.answers[q.id] === "object")
+                ? { ...activeExamSession.answers[q.id] }
+                : {};
+            if (rightVal) prev[pairIndex] = rightVal;
+            else delete prev[pairIndex];
+            activeExamSession.answers[q.id] = prev;
+            markAnswerChanged();
+        }
+
+        function onEssayAnswerInput(val) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            activeExamSession.answers[q.id] = val;
+            examSessionDirty = true;
+            renderCurrentExamQuestion(false);
+            updateExamProgressIndicators();
+            if (examTextDebounceTimer) clearTimeout(examTextDebounceTimer);
+            examTextDebounceTimer = setTimeout(() => persistActiveExamSession(true), 600);
+        }
+
+        function clearCurrentStudentAnswer() {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            delete activeExamSession.answers[q.id];
+            examSessionDirty = true;
+            renderCurrentExamQuestion(true);
+            updateExamProgressIndicators();
+            persistActiveExamSession(true);
+        }
+
+        function toggleDoubtFlag(checked) {
+            if (!activeExamSession) return;
+            const q = activeExamSession.questions[activeExamSession.currentIndex];
+            activeExamSession.doubts[q.id] = Boolean(checked);
+            examSessionDirty = true;
+            renderCurrentExamQuestion(false);
+            updateExamProgressIndicators();
+            persistActiveExamSession(true);
+        }
+
+        function toggleExamPassageCollapse() {
+            examPassageCollapsed = !examPassageCollapsed;
+            document.getElementById("question-passage-body")?.classList.toggle("hidden", examPassageCollapsed);
+            const btn = document.getElementById("btn-toggle-exam-passage");
+            if (btn) btn.textContent = examPassageCollapsed ? "Tampilkan" : "Sembunyikan";
+        }
+
+        function changeExamFontSize(delta) {
+            examFontScale = Math.min(130, Math.max(85, examFontScale + delta * 10));
+            const label = document.getElementById("exam-font-size-label");
+            if (label) label.textContent = `${examFontScale}%`;
+            renderCurrentExamQuestion(true);
+        }
+
+        // ==================== PENGAWAS INTEGRITAS & LAYAR PENUH ====================
+        function requestExamFullscreen() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+            document.getElementById("exam-fullscreen-warning-bar")?.classList.add("hidden");
+        }
+
+        function exitExamFullscreenSafe() {
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+            document.getElementById("exam-fullscreen-warning-bar")?.classList.add("hidden");
+        }
+
+        let lastViolationTimestamp = 0;
+        function logIntegrityViolation(reason) {
+            if (currentScreen !== "exam" || !activeExamSession) return;
+            if (appState.config?.enableIntegrityMonitor === false) return;
+
+            const now = Date.now();
+            if (now - lastViolationTimestamp < 2500) return;
+            lastViolationTimestamp = now;
+
+            const timeStr = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+            activeExamSession.proctorLogs = activeExamSession.proctorLogs || [];
+            activeExamSession.proctorLogs.push({
+                time: timeStr,
+                questionNo: (activeExamSession.currentIndex || 0) + 1,
+                reason
+            });
+            persistActiveExamSession(true);
+
+            const count = activeExamSession.proctorLogs.length;
+            const maxAllowed = Number(appState.config?.maxIntegrityViolations || 0);
+            if (maxAllowed > 0 && count >= maxAllowed) {
+                showToast(`Batas pelanggaran (${maxAllowed}x) tercapai. Ujian dikumpulkan otomatis.`, "error");
+                finishExam(`Batas pelanggaran pengawas (${maxAllowed}x) tercapai`);
+                return;
+            }
+            showToast(`Peringatan Pengawas (${count}x): ${reason}`, "warning");
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && currentScreen === "exam" && activeExamSession) {
+                logIntegrityViolation("Berpindah tab atau meminimalkan jendela browser");
+            }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+            if (currentScreen === "exam" && activeExamSession && appState.config?.requireFullscreen) {
+                const isFs = Boolean(document.fullscreenElement);
+                document.getElementById("exam-fullscreen-warning-bar")?.classList.toggle("hidden", isFs);
+                if (!isFs) {
+                    logIntegrityViolation("Keluar dari mode layar penuh");
+                }
+            }
+        });
+
+        // ==================== PENILAIAN & PENGUMPULAN JAWABAN ====================
+        function isQuestionAnswered(q, ans) {
+            if (ans === undefined || ans === null) return false;
+            if (q.type === "single") return typeof ans === "number" && ans >= 0;
+            if (q.type === "complex") return Array.isArray(ans) && ans.length > 0;
+            if (q.type === "truefalse") return typeof ans === "boolean";
+            if (q.type === "short" || q.type === "essay") return String(ans).trim().length > 0;
+            if (q.type === "matching") {
+                return typeof ans === "object" && Object.values(ans).some(v => String(v || "").trim().length > 0);
+            }
+            return false;
+        }
+
+        function evaluateSingleQuestionScore(q, ans, manualEssayScore) {
+            const maxPts = Number(q.points || 10);
+            if (q.type === "essay") {
+                if (manualEssayScore !== undefined && manualEssayScore !== null && manualEssayScore !== "") {
+                    const earned = Math.min(maxPts, Math.max(0, Number(manualEssayScore)));
+                    return { earned, max: maxPts, isCorrect: earned >= maxPts * 0.6, isPendingEssay: false };
+                }
+                return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: true };
+            }
+
+            if (!isQuestionAnswered(q, ans)) {
+                return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: false };
+            }
+
+            if (q.type === "single") {
+                const ok = Number(ans) === Number(q.correctIndex || 0);
+                return { earned: ok ? maxPts : 0, max: maxPts, isCorrect: ok, isPendingEssay: false };
+            }
+
+            if (q.type === "complex") {
+                const expected = [...new Set((q.correctIndices || []).map(Number))].sort((a, b) => a - b);
+                const actual = [...new Set((Array.isArray(ans) ? ans : []).map(Number))].sort((a, b) => a - b);
+                const ok = expected.length === actual.length && expected.every((v, i) => v === actual[i]);
+                return { earned: ok ? maxPts : 0, max: maxPts, isCorrect: ok, isPendingEssay: false };
+            }
+
+            if (q.type === "truefalse") {
+                const ok = Boolean(ans) === Boolean(q.correctBool);
+                return { earned: ok ? maxPts : 0, max: maxPts, isCorrect: ok, isPendingEssay: false };
+            }
+
+            if (q.type === "short") {
+                const normAns = String(ans).trim().toLowerCase();
+                const ok = (q.acceptedAnswers || []).some(a => String(a).trim().toLowerCase() === normAns);
+                return { earned: ok ? maxPts : 0, max: maxPts, isCorrect: ok, isPendingEssay: false };
+            }
+
+            if (q.type === "matching") {
+                const pairs = q.pairs || [];
+                if (pairs.length === 0) return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: false };
+                let matched = 0;
+                pairs.forEach((p, idx) => {
+                    if (String(ans?.[idx] || "").trim() === String(p.right || "").trim()) matched++;
+                });
+                const earned = Math.round(((matched / pairs.length) * maxPts) * 100) / 100;
+                return { earned, max: maxPts, isCorrect: matched === pairs.length, isPendingEssay: false };
+            }
+
+            return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: false };
+        }
+
+        function computeExamResultMetrics(questions, answers, essayScores) {
+            let totalEarned = 0;
+            let totalMax = 0;
+            let correctCount = 0;
+            let pendingEssayCount = 0;
+
+            (questions || []).forEach(q => {
+                const ev = evaluateSingleQuestionScore(q, answers?.[q.id], essayScores?.[q.id]);
+                totalEarned += ev.earned;
+                totalMax += ev.max;
+                if (ev.isCorrect) correctCount++;
+                if (ev.isPendingEssay) pendingEssayCount++;
+            });
+
+            const score = totalMax > 0 ? Math.round((totalEarned / totalMax) * 1000) / 10 : 0;
+            return {
+                score,
+                totalEarned: Math.round(totalEarned * 100) / 100,
+                totalMax: Math.round(totalMax * 100) / 100,
+                correctCount,
+                pendingEssayCount
+            };
+        }
+
         function openSubmitConfirmModal() {
             if (!activeExamSession) return;
-            const qs = activeExamSession.questions;
+            const qs = activeExamSession.questions || [];
             let answered = 0;
-            let doubt = 0;
+            let doubts = 0;
             qs.forEach(q => {
-                if (isQuestionAnswered(q, activeExamSession.answers[q.id])) answered++;
-                if (activeExamSession.doubts[q.id]) doubt++;
+                if (isQuestionAnswered(q, activeExamSession.answers?.[q.id])) answered++;
+                if (activeExamSession.doubts?.[q.id]) doubts++;
             });
-            const empty = qs.length - answered;
+            const empty = Math.max(0, qs.length - answered);
 
             document.getElementById("submit-summary-box").innerHTML = `
                 <div class="flex justify-between"><span>Total Butir Soal:</span><strong>${qs.length} Soal</strong></div>
                 <div class="flex justify-between text-emerald-700"><span>Sudah Dijawab:</span><strong>${answered} Soal</strong></div>
-                <div class="flex justify-between text-amber-700"><span>Ditandai Ragu-ragu:</span><strong>${doubt} Soal</strong></div>
+                <div class="flex justify-between text-amber-700"><span>Ditandai Ragu-ragu:</span><strong>${doubts} Soal</strong></div>
                 <div class="flex justify-between text-rose-700"><span>Belum Dijawab (Kosong):</span><strong>${empty} Soal</strong></div>
             `;
 
@@ -4453,160 +4397,118 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             modal.classList.remove("flex");
         }
 
-        function evaluateSingleQuestionScore(q, ans, manualEssayScore) {
-            const maxPts = Number(q.points || 10);
-            if (q.type === "single") {
-                const isCorrect = typeof ans === "number" && ans === Number(q.correctIndex);
-                return { earned: isCorrect ? maxPts : 0, max: maxPts, isCorrect, isPendingEssay: false };
-            }
-            if (q.type === "complex") {
-                const expected = [...(q.correctIndices || [])].map(Number).sort((a, b) => a - b);
-                const actual = Array.isArray(ans) ? [...ans].map(Number).sort((a, b) => a - b) : [];
-                const isCorrect = expected.length > 0 &&
-                    expected.length === actual.length &&
-                    expected.every((v, idx) => v === actual[idx]);
-                return { earned: isCorrect ? maxPts : 0, max: maxPts, isCorrect, isPendingEssay: false };
-            }
-            if (q.type === "truefalse") {
-                const isCorrect = typeof ans === "boolean" && ans === Boolean(q.correctBool);
-                return { earned: isCorrect ? maxPts : 0, max: maxPts, isCorrect, isPendingEssay: false };
-            }
-            if (q.type === "short") {
-                const normAns = String(ans || "").trim().toLowerCase();
-                const accepted = (q.acceptedAnswers || []).map(a => String(a).trim().toLowerCase()).filter(Boolean);
-                const isCorrect = normAns.length > 0 && accepted.includes(normAns);
-                return { earned: isCorrect ? maxPts : 0, max: maxPts, isCorrect, isPendingEssay: false };
-            }
-            if (q.type === "matching") {
-                const pairs = q.pairs || [];
-                if (pairs.length === 0) return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: false };
-                const mapAns = (ans && typeof ans === "object" && !Array.isArray(ans)) ? ans : {};
-                let matchedCount = 0;
-                pairs.forEach((p, idx) => {
-                    if (String(mapAns[idx] || "").trim() === String(p.right || "").trim()) {
-                        matchedCount++;
-                    }
-                });
-                const ratio = matchedCount / pairs.length;
-                const earned = Math.round(maxPts * ratio * 100) / 100;
-                return { earned, max: maxPts, isCorrect: matchedCount === pairs.length, isPendingEssay: false };
-            }
-            if (q.type === "essay") {
-                if (manualEssayScore !== undefined && manualEssayScore !== null && !Number.isNaN(Number(manualEssayScore))) {
-                    const clamped = Math.max(0, Math.min(maxPts, Number(manualEssayScore)));
-                    return { earned: clamped, max: maxPts, isCorrect: clamped >= maxPts * 0.6, isPendingEssay: false };
-                }
-                return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: true };
-            }
-            return { earned: 0, max: maxPts, isCorrect: false, isPendingEssay: false };
-        }
-
-        function computeExamResultMetrics(questions, answers, essayScoresMap = {}) {
-            let totalEarned = 0;
-            let totalMax = 0;
-            let correctCount = 0;
-            let pendingEssayCount = 0;
-
-            (questions || []).forEach(q => {
-                const ev = evaluateSingleQuestionScore(q, answers?.[q.id], essayScoresMap?.[q.id]);
-                totalEarned += ev.earned;
-                totalMax += ev.max;
-                if (ev.isCorrect) correctCount++;
-                if (ev.isPendingEssay) pendingEssayCount++;
-            });
-
-            const score = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
-            return {
-                score,
-                totalEarned: Math.round(totalEarned * 100) / 100,
-                totalMax: Math.round(totalMax * 100) / 100,
-                correctCount,
-                totalQuestions: (questions || []).length,
-                pendingEssayCount
-            };
-        }
-
         let lastSubmittedResultRecord = null;
         let resultReviewVisible = false;
+        let isSubmittingExam = false;
 
-        async function finishExam(isAutoSubmit = false, opts = {}) {
-            if (!activeExamSession || activeExamSession.submitted) return;
+        async function finishExam(autoReason = "") {
+            if (!activeExamSession || isSubmittingExam) return;
+            isSubmittingExam = true;
+
+            if (examTimerInterval) {
+                clearInterval(examTimerInterval);
+                examTimerInterval = null;
+            }
+
             const confirmBtn = document.getElementById("btn-confirm-submit-exam");
             if (confirmBtn) confirmBtn.disabled = true;
 
-            // Pastikan soal yang dinilai merujuk pada kunci jawaban otoritatif dari bank soal
-            rehydrateSessionQuestionsFromSubject(activeExamSession);
-
-            activeExamSession.submitted = true;
-            stopExamTimer();
             closeSubmitConfirmModal();
+            toggleMobileNavModal(false);
             exitExamFullscreenSafe();
 
-            const qs = activeExamSession.questions;
-            const metrics = computeExamResultMetrics(qs, activeExamSession.answers, {});
-            const cleanClass = normalizeClassKey(activeExamSession.className);
-            const cleanNisn = normalizeNisn(activeExamSession.nisn);
-            const detId = `res_${activeExamSession.subjectId}_${cleanClass}_${cleanNisn}`;
+            // Gabungkan kunci jawaban otoritatif dari memori jika tersedia agar penilaian tetap akurat
+            const subjRef = (appState.subjects || []).find(s => s.id === activeExamSession.subjectId);
+            const subjQMap = new Map((subjRef?.questions || []).map(sq => [sq.id, sq]));
 
-            const now = new Date();
-            const finishedAtStr = now.toLocaleString("id-ID", {
-                day: "2-digit", month: "short", year: "numeric",
-                hour: "2-digit", minute: "2-digit", second: "2-digit"
+            const finalQuestions = (activeExamSession.questions || []).map(q => {
+                const authQ = examAuthoritativeQuestionsMap.get(q.id) || subjQMap.get(q.id);
+                if (!authQ) return q;
+                return {
+                    ...authQ,
+                    ...q,
+                    correctIndex: q.correctIndex !== undefined ? q.correctIndex : authQ.correctIndex,
+                    correctIndices: q.correctIndices !== undefined ? q.correctIndices : authQ.correctIndices,
+                    correctBool: q.correctBool !== undefined ? q.correctBool : authQ.correctBool,
+                    acceptedAnswers: q.acceptedAnswers !== undefined ? q.acceptedAnswers : authQ.acceptedAnswers,
+                    pairs: q.pairs !== undefined ? q.pairs : authQ.pairs,
+                    explanation: q.explanation || authQ.explanation || ""
+                };
             });
 
+            const metrics = computeExamResultMetrics(finalQuestions, activeExamSession.answers, {});
             const record = {
-                id: detId,
+                id: "res_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
                 studentName: activeExamSession.studentName,
                 nisn: activeExamSession.nisn,
+                nisnNormalized: normalizeNisn(activeExamSession.nisn),
                 className: activeExamSession.className,
-                accessCodeUsed: activeExamSession.accessCodeUsed || "-",
+                accessCodeUsed: activeExamSession.accessCodeUsed || "",
                 subjectId: activeExamSession.subjectId,
                 subjectTitle: activeExamSession.subjectTitle,
-                kkm: activeExamSession.kkm,
+                kkm: activeExamSession.kkm || 75,
                 showScore: activeExamSession.showScore !== false,
                 showReview: activeExamSession.showReview !== false,
-                passages: JSON.parse(JSON.stringify(activeExamSession.passages || [])),
-                questions: JSON.parse(JSON.stringify(qs)),
-                answers: JSON.parse(JSON.stringify(activeExamSession.answers || {})),
+                questions: finalQuestions,
+                passages: activeExamSession.passages || [],
+                answers: { ...(activeExamSession.answers || {}) },
                 essayScores: {},
                 score: metrics.score,
                 totalEarned: metrics.totalEarned,
                 totalMax: metrics.totalMax,
                 correctCount: metrics.correctCount,
-                totalQuestions: metrics.totalQuestions,
+                totalQuestions: finalQuestions.length,
                 pendingEssayCount: metrics.pendingEssayCount,
-                proctorLogs: JSON.parse(JSON.stringify(activeExamSession.proctorLogs || [])),
-                autoSubmitted: Boolean(isAutoSubmit),
-                finishedAt: finishedAtStr,
-                finishedTimestamp: now.getTime(),
+                proctorLogs: [...(activeExamSession.proctorLogs || [])],
+                autoSubmitReason: autoReason || "",
+                finishedAt: new Date().toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }),
+                finishedTimestamp: Date.now(),
                 cloudSynced: false
             };
 
-            // Simpan ke riwayat hasil lokal
-            appState.results = (appState.results || []).filter(r => String(r.id) !== String(record.id));
+            appState.results = appState.results || [];
             appState.results.unshift(record);
             saveAppState(false);
             clearSavedExamSession();
 
             lastSubmittedResultRecord = record;
-            if (!opts.stayOnCurrentScreen) {
-                renderResultScreen(record);
-                switchScreenInternal("result");
-            }
+            switchScreenInternal("result");
+            renderResultScreen(record);
 
+            isSubmittingExam = false;
             if (confirmBtn) confirmBtn.disabled = false;
 
-            // Kirim ke Cloud Firestore (atau masukkan ke antrean jika koneksi sedang putus)
+            // Pastikan inisialisasi Cloud sudah siap, lalu unggah langsung ke Firestore dengan percobaan ulang otomatis
+            updateResultCloudSyncStatus("syncing");
+            if (window.cloudSync && !window.cloudSync.enabled && window.cloudSync.ready) {
+                await Promise.race([
+                    window.cloudSync.ready,
+                    new Promise(r => setTimeout(r, 3500))
+                ]);
+                if (!window.cloudSync.enabled && typeof window.cloudSync.reinit === "function") {
+                    await window.cloudSync.reinit();
+                }
+            }
+
             if (window.cloudSync && window.cloudSync.enabled) {
-                updateResultCloudSyncStatus("syncing");
-                const cloudRes = await window.cloudSync.saveResult(record);
+                let cloudRes = { ok: false };
+                const retryDelays = [0, 1200, 2500];
+                for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+                    if (retryDelays[attempt] > 0) {
+                        await new Promise(r => setTimeout(r, retryDelays[attempt]));
+                    }
+                    cloudRes = await window.cloudSync.saveResult(record);
+                    if (cloudRes && cloudRes.ok) break;
+                }
+
                 if (cloudRes && cloudRes.ok) {
                     record.cloudSynced = true;
+                    removePendingResult(record.id);
                     saveAppState(false);
                     updateResultCloudSyncStatus("synced");
                 } else {
                     enqueuePendingResult(record);
-                    updateResultCloudSyncStatus("failed");
+                    updateResultCloudSyncStatus("failed", cloudRes?.code);
                 }
             } else {
                 enqueuePendingResult(record);
@@ -4616,7 +4518,7 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             activeExamSession = null;
         }
 
-        function updateResultCloudSyncStatus(status) {
+        function updateResultCloudSyncStatus(status, errorCode = "") {
             const box = document.getElementById("result-cloud-sync-box");
             const txt = document.getElementById("result-cloud-sync-text");
             const retryBtn = document.getElementById("btn-retry-sync-result");
@@ -4633,18 +4535,23 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 if (retryBtn) retryBtn.classList.add("hidden");
             } else if (status === "failed") {
                 box.className = "p-3.5 rounded-2xl border border-rose-200 bg-rose-50 text-rose-900 text-xs flex flex-wrap items-center justify-between gap-3 text-left";
-                txt.textContent = "⚠ Koneksi internet terputus saat mengirim. Jawaban tersimpan aman di perangkat ini.";
+                txt.textContent = errorCode === "permission-denied"
+                    ? "⚠ Server menolak penyimpanan (izin Firestore Rules). Jawaban tersimpan aman di perangkat ini."
+                    : "⚠ Koneksi ke server terhambat saat mengirim. Jawaban tersimpan aman di perangkat ini dan akan dikirim ulang otomatis.";
                 if (retryBtn) retryBtn.classList.remove("hidden");
             } else {
                 box.className = "p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-xs flex flex-wrap items-center justify-between gap-3 text-left";
-                txt.textContent = "Jawaban tersimpan di penyimpanan perangkat lokal.";
-                if (retryBtn) retryBtn.classList.add("hidden");
+                txt.textContent = "Jawaban tersimpan di penyimpanan perangkat lokal dan akan diunggah saat server terhubung.";
+                if (retryBtn) retryBtn.classList.remove("hidden");
             }
         }
 
         async function retrySyncCurrentResult() {
             if (!lastSubmittedResultRecord) return;
             updateResultCloudSyncStatus("syncing");
+            if (window.cloudSync && !window.cloudSync.enabled && typeof window.cloudSync.reinit === "function") {
+                await window.cloudSync.reinit();
+            }
             const res = await window.cloudSync.saveResult(lastSubmittedResultRecord);
             if (res && res.ok) {
                 lastSubmittedResultRecord.cloudSynced = true;
@@ -4653,7 +4560,7 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
                 updateResultCloudSyncStatus("synced");
                 showToast("Lembar jawaban berhasil dikirim ke server!", "success");
             } else {
-                updateResultCloudSyncStatus("failed");
+                updateResultCloudSyncStatus("failed", res?.code);
                 showToast("Masih gagal terhubung ke server. Coba beberapa saat lagi.", "error");
             }
         }
@@ -5593,6 +5500,14 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             if (badge) badge.textContent = activeQ;
         }
 
+        let teacherQuestionSearchTimer = null;
+        function debouncedRenderTeacherQuestionsList() {
+            if (teacherQuestionSearchTimer) clearTimeout(teacherQuestionSearchTimer);
+            teacherQuestionSearchTimer = setTimeout(() => {
+                renderTeacherQuestionsList();
+            }, 120);
+        }
+
         function renderTeacherQuestionsList() {
             const subj = getActiveTeacherBankSubject();
             const listEl = document.getElementById("teacher-questions-list");
@@ -6136,6 +6051,14 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         }
 
         // ==================== TAB GURU 3: REKAP NILAI, KOREKSI ESSAY & EXCEL ====================
+        let teacherResultsSearchTimer = null;
+        function debouncedRenderTeacherResultsTable() {
+            if (teacherResultsSearchTimer) clearTimeout(teacherResultsSearchTimer);
+            teacherResultsSearchTimer = setTimeout(() => {
+                renderTeacherResultsTable();
+            }, 120);
+        }
+
         function getFilteredTeacherResults() {
             const clsFilter = document.getElementById("res-filter-class")?.value || "ALL";
             const subjFilter = document.getElementById("res-filter-subject")?.value || "ALL";
@@ -6499,17 +6422,22 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             if (!modal) return;
             modal.classList.add("hidden");
             modal.classList.remove("flex");
+            currentStudentAnswersModalIndex = -1;
         }
 
-        function exportResultsToXlsx() {
+        async function exportResultsToXlsx() {
             const filtered = getFilteredTeacherResults();
             if (filtered.length === 0) {
                 showToast("Tidak ada data nilai untuk diunduh.", "warning");
                 return;
             }
             if (typeof XLSX === "undefined") {
-                showToast("Pustaka Excel belum selesai dimuat. Periksa koneksi internet Anda.", "error");
-                return;
+                showToast("Menyiapkan pustaka Excel...", "info");
+                const loaded = await ensureXlsxLoaded();
+                if (!loaded) {
+                    showToast("Pustaka Excel belum selesai dimuat. Periksa koneksi internet Anda.", "error");
+                    return;
+                }
             }
 
             const rows = filtered.map((r, idx) => ({
@@ -6981,12 +6909,16 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             );
         }
 
-        function exportStudentCodesXlsx() {
+        async function exportStudentCodesXlsx() {
             const codes = appState.studentCodes || [];
             if (codes.length === 0) return;
             if (typeof XLSX === "undefined") {
-                showToast("Pustaka Excel belum selesai dimuat.", "error");
-                return;
+                showToast("Menyiapkan pustaka Excel...", "info");
+                const loaded = await ensureXlsxLoaded();
+                if (!loaded) {
+                    showToast("Pustaka Excel belum selesai dimuat.", "error");
+                    return;
+                }
             }
             const rows = codes.map((c, idx) => ({
                 "No": idx + 1,
@@ -7536,7 +7468,7 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
         }
 
         // ==================== INISIALISASI SAAT HALAMAN DIMUAT ====================
-        document.addEventListener("DOMContentLoaded", () => {
+        function bootstrapCbtApp() {
             applyWebBranding();
             renderTeacherTypeFields();
             checkAndRenderWelcomeResumeBanner();
@@ -7547,7 +7479,20 @@ Pembahasan: Sejak UU No. 8 Tahun 2022, ibu kota Kalsel berkedudukan di Banjarbar
             if (deferred === "openTeacherPinModal") openTeacherPinModal();
             else if (deferred === "openOperatorPinModal") openOperatorPinModal();
             else if (deferred === "verifyStudentAccessCode") verifyStudentAccessCode();
-        });
+
+            // Hangatkan cache KaTeX di latar belakang saat browser senggang
+            if (typeof window.requestIdleCallback === "function") {
+                window.requestIdleCallback(() => ensureKatexLoaded(), { timeout: 3000 });
+            } else {
+                setTimeout(() => ensureKatexLoaded(), 2500);
+            }
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", bootstrapCbtApp);
+        } else {
+            bootstrapCbtApp();
+        }
     </script>
 </body>
 </html>
